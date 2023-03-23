@@ -1,0 +1,19 @@
+{
+  "name": "mleague_data_extract",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "config": "^3.3.9",
+    "electron": "^23.1.4",
+    "log4js": "^6.9.1",
+    "selenium-download": "^2.0.16",
+    "selenium-webdriver": "^4.8.1",
+    "sqlite3": "^5.1.6"
+  }
+}
