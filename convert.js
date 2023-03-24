@@ -351,6 +351,11 @@ async function start(p) {
                     if (y in yakuMap) {
                       hY = yakuMap[y];
                     } else await db.insert("YAKU", [[y, ""]]); // 見つからなかったら追加だけする
+                    if (
+                      line.furo &&
+                      ["全帯么", "三色同順", "一気通貫", "混一色", "純全帯么", "清一色"].indexOf(hY) > -1
+                    )
+                      hY += "（鳴）"; // 鳴いてたら
                     haruzoYaku.push(hY);
                   }
                   line.yaku = haruzoYaku.join("、");
@@ -359,10 +364,59 @@ async function start(p) {
               stats = stats.concat(kyokuStats);
               break;
             case "gameend":
-              // TODO 最後が流局で供託が残ったときの持ち点の確認
-              // TODO 暗槓、加槓、チョンボ、について確認
               // L001_S013_0001_02A|["D0","78.8","A0","14.9","C0","-35.8","B0","-57.9","D0_rank=0","A0_rank=1","C0_rank=2","B0_rank=3"]
+              let rankMap = {};
+              let rankMapP = {};
+              for (let i = args.length - 4; i < args.length; i++) {
+                // 同じランクがあったら、馬は半分こにするために確認
+                let r = Number(args[i].substr(args[i].length - 1, 1)) + 1;
+                if (!(r in rankMap)) rankMap[r] = [];
+                rankMap[r].push(args[i].substr(0, 2)); // ランクに対して、人をぶら下げる
+                rankMapP[args[i].substr(0, 2)] = r;
+              }
+              let juniMapTmp = { 1: 20000, 2: -20000, 3: -40000, 4: -60000 };
+              let juniMap = {};
+              // +20000              32500:52.500
+              // -20000              25000:5000
+              // -40000              22500:-17.500
+              // -60000              20000:-40000
+              for (let i = 1; i < 5; i++) {
+                let r = Object.values(rankMap).filter((r) => i === r);
+                if (r.length === 1) {
+                  juniMap[i] = juniMapTmp[i];
+                } else if (r.length === 2) {
+                  juniMap[i] = (juniMapTmp[i] + juniMapTmp[i + 1]) / 2;
+                } else if (r.length === 3) {
+                }
+              }
+              let getJuniP = (pl) => {
+                switch (rankMap[rankMapP[pl]].length) {
+                  case 1:
+                    return juniMapTmp[rankMapP[pl]];
+                  case 2:
+                    return (juniMapTmp[rankMapP[pl]] + juniMapTmp[rankMapP[pl] + 1]) / 2;
+                  case 3:
+                    let pri = rankMap[rankMapP[pl]].filter((a) => a < pl)[0]; // 起家かチェック
+                    if (!pri) {
+                      // 1位が３人のとき
+                      // -13400
+                      // -13400
+                      // -13200 // 起家に近い人
+                      // 16.8 16.6 16.6
+                      // 2位が３人のとき
+                      // -40000 -10
+                      return rankMapP[pl] === 1 ? -13200 : -40000;
+                    } else {
+                      return rankMapP[pl] === 1 ? -13400 : -40000;
+                    }
+                }
+              };
+
+              let checkTotal = 0;
               for (let i = 0; i < 8; i += 2) {
+                let rank = rankMapP[args[i]];
+                let p = Number(args[i + 1]);
+                let tenbo = Math.round(p * 1000 - getJuniP(args[i]));
                 // 2ずつ処理
                 result.push({
                   game_id: gameCommon.game_id,
@@ -372,10 +426,25 @@ async function start(p) {
                   team_id: players[args[i]].teamId,
                   p_id: players[args[i]].no,
                   p_name: players[args[i]].full,
-                  point: args[i + 1],
-                  tenbo: kyokuStats[nanichaMap[args[i]]].point_now,
-                  rank: Number(args[i / 2 + 8].substr(args[i / 2 + 8].length - 1, 1)) + 1,
+                  point: p,
+                  // tenbo: kyokuStats[nanichaMap[args[i]]].point_now,
+                  tenbo: tenbo,
+                  rank: rank,
                 });
+                checkTotal += tenbo;
+                if (kyokuStats[nanichaMap[args[i]]].point_now != tenbo) {
+                  kyokuStats[nanichaMap[args[i]]].kyoutaku = tenbo - kyokuStats[nanichaMap[args[i]]].point_now;
+                  kyokuStats[nanichaMap[args[i]]].balance += kyokuStats[nanichaMap[args[i]]].kyoutaku;
+                  kyokuStats[nanichaMap[args[i]]].point_now = tenbo;
+                }
+              }
+              if (checkTotal !== 100000) {
+                for (let r of result) {
+                  r.point = `結果が正しくありません。${r.point} `;
+                }
+              } else {
+                stats.splice(stats.length - 4, 4);
+                stats = stats.concat(kyokuStats); // 持ち点の更新を反映
               }
               break;
           }

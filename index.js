@@ -64,6 +64,8 @@ class WebCls {
         logger.warn(e);
       }
       let urls = [
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_01A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_02A",
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0002_01A",
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0002_02A",
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0003_01A",
@@ -242,6 +244,14 @@ class WebCls {
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0089_02A",
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0090_01A",
         "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0090_02A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0091_01A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0091_02A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0092_01A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0092_02A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0093_01A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0093_02A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0094_01A",
+        "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0094_02A",
       ];
       // urls.push("https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_01A");
       // urls.push("https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_02A");

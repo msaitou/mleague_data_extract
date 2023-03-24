@@ -1,6 +1,7 @@
 const conf = require("config");
-const { Builder, By, until } = require("selenium-webdriver");
+const fs = require("fs");
 const chrome = require("selenium-webdriver/chrome");
+const { finished } = require("stream");
 function getLogInstance() {
   return global.log ? global.log : thisLog();
 }
@@ -18,11 +19,11 @@ const thisLog = () => {
       },
       app: {
         type: "dateFile",
-        filename: "log/a.log",
+        filename: "log/m.log",
         pattern: "yyMMdd",
         keepFileExt: true,
         layout: { type: "pattern", pattern: "[%d{yy-MM-dd hh:mm:ss} %.4p] %m ->%f{2} %l" },
-        numBackups: 1, // 指定した日数分保持
+        numBackups: 1, // 指定した日数分保持　しない
       },
       wrapInfo: { type: "logLevelFilter", appender: "app", level: "info" },
     },
@@ -32,6 +33,18 @@ const thisLog = () => {
       default: { appenders: ["out", "wrapInfo"], level: "all", enableCallStack: true },
     },
   });
+  // 古いファイルを削除してくれないので、自分で消す
+  // 2個残す。　logファイルがあるフォルダで、m.*.logを古い順にけす
+  const KEEP_NUM = 2;
+  let files = fs.readdirSync("log");
+  files = files.filter((f) => /^(a|m)\.\d{6}\.log$/.test(f)); // aかm.数字6桁.logという文字列をチェック
+  let cnt = files.length;
+  for (let f of files) {
+    if (cnt > KEEP_NUM) {
+      fs.unlinkSync(`log/${f}`);
+      cnt--;
+    }
+  }
   const logger = log.getLogger();
   logger.level = "all";
   return logger;
