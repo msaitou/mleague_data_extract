@@ -9,7 +9,8 @@ const sqliteDb = require("./sql").sqliteDb;
 async function start(p) {
   try {
     // TODO 引数にどのデータを解析するか 2:year 3:日にち
-    let db = new sqliteDb(p[2]);
+    let db = new sqliteDb();
+    db.setYear(p[2]);
     let dateList = [];
     if (p[3]) {
       // dateList = p[3].split(",");

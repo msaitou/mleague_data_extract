@@ -1,7 +1,6 @@
 const conf = require("config");
 const fs = require("fs");
 const chrome = require("selenium-webdriver/chrome");
-const { finished } = require("stream");
 function getLogInstance() {
   return global.log ? global.log : thisLog();
 }
@@ -23,11 +22,10 @@ const thisLog = () => {
         pattern: "yyMMdd",
         keepFileExt: true,
         layout: { type: "pattern", pattern: "[%d{yy-MM-dd hh:mm:ss} %.4p] %m ->%f{2} %l" },
-        numBackups: 1, // 指定した日数分保持　しない
+        numBackups: 1, // 指定した日数分保持　してくれず残り続ける
       },
       wrapInfo: { type: "logLevelFilter", appender: "app", level: "info" },
     },
-    // categories: { default: { appenders: ["out", "app"], level: "all" } },
     categories: {
       // enableCallStack: true でフォーマットの%fや%lが有効になる
       default: { appenders: ["out", "wrapInfo"], level: "all", enableCallStack: true },
@@ -61,7 +59,8 @@ const getDriverPath = async function () {
     try {
       // # Driverのダウンロードとアップデート
       await new Promise((resolve, reject) => {
-        selenium.ensure(path, (e) => {
+        // selenium.ensure(path, (e) => {
+        selenium.update(path, (e) => {
           if (e) console.error(e.stack);
           // log.info("?????");
           resolve(true);

@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/ja/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+    <title>Mリーグ-データ抽出解析くん（haruzo専用）</title>
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css" />
+  </head>
+  <body>
+    <button id="key">てすと</button>
+    <button id="test">test</button>
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a href="#t1" class="nav-link active" data-bs-toggle="tab">データ抽出</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#t2" data-bs-toggle="tab">整形＆出力</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#t3" data-bs-toggle="tab">抽出サマリー</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#t4" data-bs-toggle="tab">シーズンマスタ</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#t5" data-bs-toggle="tab">役マスタ</a>
+      </li>
+    </ul>
+    <div class="tab-content">
+      <div id="t1" class="tab-pane active">
+        de-tatyuushutu
+      </div>
+      <div id="t2" class="tab-pane">
+        seikeiI&syuturyoku
+      </div>
+      <div id="t3" class="tab-pane">
+        samari
+      </div>
+      <div id="t4" class="tab-pane">
+        si-zon
+      </div>
+      <div id="t5" class="tab-pane">
+        <div class="row">
+          <table class="table table-sm ">
+            <thead>
+              <tr>
+                <th>牌譜ビューアの役</th>
+                <th>変換後の役</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+    </div>
+    <script src="./index.js"></script>
+    <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

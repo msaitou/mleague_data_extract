@@ -13,7 +13,7 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/index.js",
-      "args": ["2022"]
+      "args": ["2018"]
     },    {
       "type": "node",
       "request": "launch",
