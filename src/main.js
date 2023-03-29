@@ -34,7 +34,8 @@ const createWindow = () => {
 app.whenReady().then(() => {
   ipcMain.handle("dialog:openFile", handleFileOpen); // プロセス間通信
   ipcMain.handle("accessDb", accessDb); // プロセス間通信
-
+  ipcMain.handle("extractedData", extractedData); // プロセス間通信
+  ipcMain.handle("convert", convert); // プロセス間通信
   createWindow();
   // アプリケーションがアクティブになった時の処理(Macだと、Dockがクリックされた時）
   app.on("activate", () => {
@@ -62,21 +63,69 @@ async function handleFileOpen(e, a) {
     return filePaths[0];
   }
 }
+const logger = require("../initter.js").log();
+global.log = logger;
 const conf = require("config");
 const { sqliteDb } = require("../sql.js");
+const { Convert } = require("../convert.js");
 const db = new sqliteDb();
 const { D } = require("../lib/defain.js");
-async function accessDb(e, tName, method, year, cond, rec) {
-  console.log(tName, method, cond, rec);
+async function accessDb(e, tName, method, year, params = {}) {
+  logger.info(tName, method, params);
   if (year) db.setYear(year);
   switch (method) {
     case "select":
-      return await db.select(tName, cond);
-    case "edit":
+      return await db.select(tName, params.cond, params.fields);
+    case "insert":
+      return await db.insert(tName, params.recs);
+    case "update":
+      return await db.update(tName, params.recs, params.cond);
     case "delete":
+      return await db.delete(tName, params.cond);
   }
 }
-// async function ttt() {
-//   console.log(seasons);
-// }
-// ttt();
+async function extractedData(e, year) {
+  mWin.webContents.send("test1","testだよ");
+  db.setYear(year);
+  let recs = await db.extracted();
+  console.log(recs);
+  let resRecs = [];
+  for (let line of recs) {
+    let status = "済";
+    if (!line.game_no) {
+      status = "未";
+      line.game_no = `${line.date_id}-${line.game_id.substr(line.game_id.length - 2, 1)}`; // 捻出
+    }
+    resRecs.push({ ...line, status });
+  }
+  return resRecs;
+}
+async function convert(e, data) {
+  logger.debug(data);
+  let convertCls = new Convert();
+  let res = {};
+  try {
+    await convertCls.do(data);
+    let idList = [];
+    Object.values(data.targetList).forEach((d) => {
+      idList = idList.concat(d);
+    });
+    for (let tbl of ["STATUS", "RESULTS"]) {
+      let recs = await accessDb(null, tbl, "select", data.year, { cond: `game_id in ('${idList.join("','")}')` });
+      let tmpHeader = D[`${tbl}_KEY_MAP`];
+      delete tmpHeader.game_id;
+      let tmpCsv = [Object.values(tmpHeader).join(",")];
+      for(let rec of recs) {
+        delete rec.game_id;
+        tmpCsv.push(Object.values(rec));
+      }
+      res[tbl] = tmpCsv.join("\n");
+    }
+    mWin.webContents.send("test1","testだよ");
+    res.ok = true;
+  } catch (e) {
+    logger.warn(e);
+    res.ng = `失敗しました。${e}`;
+  }
+  return res;
+}

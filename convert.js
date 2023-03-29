@@ -5,16 +5,22 @@ const conf = require("config");
 const fs = require("fs");
 const { D } = require("./lib/defain.js");
 const sqliteDb = require("./sql").sqliteDb;
-
+class Convert {
+  constructor() {}
+  async do(data) {
+    await start(data);
+  }
+}
+exports.Convert = Convert;
 async function start(p) {
   try {
     // TODO 引数にどのデータを解析するか 2:year 3:日にち
     let db = new sqliteDb();
-    db.setYear(p[2]);
-    let dateList = [];
-    if (p[3]) {
+    db.setYear(p.year);
+    let dateMap = [];
+    if (!p.targetList) {
       // dateList = p[3].split(",");
-      dateList = [
+      [
         "20221003",
         "20221004",
         "20221006",
@@ -109,10 +115,14 @@ async function start(p) {
         "20230317",
         "20230320",
         "20230321",
-      ]; // TODO いまだけ
+      ].forEach((d) => {
+        dateMap[d] = [1, 2];
+      }); // TODO いまだけ
     } else {
-      // SCHE　から日付を引いて、それを日付ごとにループする
+      // 画面からの引数
+      dateMap = p.targetList;
     }
+    if (!Object.keys(dateMap).length) throw "変換対象の日付が不明です";
     let yakuRecs = await db.select("YAKU");
     let yakuMap = yakuRecs.reduce((p, c) => {
       if (c.official) p[c.official] = c.haruzo;
@@ -123,8 +133,8 @@ async function start(p) {
     seasonRecs.sort((a, b) => {
       return a.start_date < b.start_date ? -1 : 1; //オブジェクトの昇順ソート
     }); // 破壊的
-    if (!dateList.length) throw "変換対象の日付が不明です";
-    for (let date of dateList) {
+
+    for (let [date, idlist] of Object.entries(dateMap)) {
       let targetCmd = [
         "'player'",
         "'gamestart'",
@@ -138,11 +148,12 @@ async function start(p) {
         "'ryukyoku'",
         "'gameend'",
       ];
-      for (let gameNo of [1, 2]) {
-        let recs = await db.select(
-          "RAW",
-          `date_id = "${date}" and cmd in(${targetCmd}) and game_id like "%${gameNo}A"`
-        );
+      for (let gid of idlist) {
+        let whereStr = `date_id = "${date}" and cmd in(${targetCmd}) and game_id like "%${gid}A"`;
+        if (gid.toString().length !== 1)
+          whereStr = `date_id = "${date}" and cmd in(${targetCmd}) and game_id = "${gid}"`;
+        let recs = await db.select("RAW", whereStr);
+
         if (!recs.length) throw `${date}の変換元のデータが見つかりません`;
         // logger.debug(recs);
         let players = {},
@@ -159,6 +170,14 @@ async function start(p) {
           if (rec.start_date <= date) gameCommon.season = `${db.year}${rec.kind}`;
         }
         for (let rec of recs) {
+          if (rec.id == 1) {
+            let exists = await db.select("RESULTS", `game_id = "${rec.game_id}"`);
+            if (exists.length && !p.reconvert) break;
+            if (p.reconvert) {
+              await db.delete("STATUS", `game_id = "${rec.game_id}"`);
+              await db.delete("RESULTS", `game_id = "${rec.game_id}"`);
+            }
+          }
           let args = JSON.parse(rec.args);
           switch (rec.cmd) {
             case "player":
@@ -166,7 +185,7 @@ async function start(p) {
               // L001_S013_0001_01A|["B0","魚谷 侑未","user","T005"]
               // L001_S013_0001_01A|["C0","佐々木 寿人","user","T003"]
               // L001_S013_0001_01A|["D0","鈴木 優","user","T007"]
-              players[args[0]] = D.MEMBER_LIST.filter((m) => m.full == args[1])[0];
+              players[args[0]] = D.MEMBER_LIST.filter((m) => m.full == args[1] || m.last + m.first == args[1])[0];
               break;
             case "gamestart":
               if (Object.keys(players).length != 4) throw "playerが４人いません";
@@ -284,7 +303,8 @@ async function start(p) {
               break;
             case "agari":
               // yaku: "役",
-              if (args[0].indexOf("ron=") === 0) args.splice(0, 1); // 不要なので削除
+              if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) args.splice(0, 1); // 不要なので削除
+              // commentは勝敗とか
               let tmp = kyokuStats[nanichaMap[args[0]]];
               args.splice(0, 3); // 不要なので削除
               for (let i in args) {
@@ -451,28 +471,33 @@ async function start(p) {
           }
           // console.log(result);
         }
-        logger.info(stats);
-        logger.info(result);
-        let saveRec = [];
-        stats.forEach((r) => {
-          delete r.nanicha;
-          saveRec.push([...Object.values(r)]);
-        });
-        await db.insert("STATUS", saveRec);
-        saveRec = [];
-        result.forEach((r) => {
-          saveRec.push([...Object.values(r)]);
-        });
-        await db.insert("RESULTS", saveRec);
+        logger.debug(stats);
+        logger.debug(result);
+        if (stats.length && result.length) {
+          let saveRec = [];
+          stats.forEach((r) => {
+            delete r.nanicha;
+            saveRec.push([...Object.values(r)]);
+          });
+          await db.insert("STATUS", saveRec);
+          saveRec = [];
+          result.forEach((r) => {
+            saveRec.push([...Object.values(r)]);
+          });
+          await db.insert("RESULTS", saveRec);
+        }
       }
     }
   } catch (e) {
     logger.warn(e);
+    throw e;
   }
 }
 let getHiniti = (b) => {
   return `${b.substr(0, 4)}/${Number(b.substr(4, 2)).toString()}/${Number(b.substr(6, 2)).toString()}`;
 };
 if (process.argv.length > 2) {
-  start(process.argv);
+  start({ year: process.argv[2], targetList: process.argv[3], reconvert: process.argv[4] });
+} else if (process.argv[0].indexOf("electron") > -1) {
+  // electronから呼ばれたら無視
 } else logger.warn("引数が足りません");

@@ -9,22 +9,30 @@
       "request": "launch",
       "name": "m_sele",
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/index.js",
       "args": ["2018"]
-    },    {
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "m_convert",
       "outputCapture": "std",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/convert.js",
       "args": ["2022", "20221003"]
+    },
+    {
+      "name": "m_eleMain",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args": ["./src"],
+      "outputCapture": "std"
     }
-
   ]
 }

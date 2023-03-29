@@ -13,14 +13,14 @@ class sqliteDb {
       RAW: "raw",
       SEASON: "season",
       YAKU: "yaku",
-      TMP:"tmp",
+      TMP: "tmp",
     },
     ACCOUNT: { FIELD: { id: "id text primary key", password: "password" } },
     SCHE: { FIELD: { date: "date text primary key", order_no: "order_no" } },
     SEASON: { FIELD: { year: "year", url_key: "url_key", kind: "kind", start_date: "start_date" } },
     RAW: { FIELD: { game_id: "game_id", date_id: "date_id", time: "time", id: "id", cmd: "cmd", args: "args" } },
     YAKU: { FIELD: { official: "official", haruzo: "haruzo" } },
-    TMP: { FIELD: { date: "date"} },
+    TMP: { FIELD: { date: "date" } },
     STATUS: {
       FIELD: Object.keys(D.STATUS_KEY_MAP).reduce((p, c) => {
         p[c] = c;
@@ -28,7 +28,7 @@ class sqliteDb {
       }, {}),
     },
     RESULTS: {
-      FIELD: Object.keys(D.RESULT_KEY_MAP).reduce((p, c) => {
+      FIELD: Object.keys(D.RESULTS_KEY_MAP).reduce((p, c) => {
         p[c] = c;
         return p;
       }, {}),
@@ -42,7 +42,7 @@ class sqliteDb {
   setYear(year) {
     this.year = year; // table名に必要
   }
-  // データの更新（一番楽なデリーとインサート固定）
+  // データの更新(複数OK)
   insert(tblKey, recs) {
     if (recs && recs.length > 0) {
       // 1レコード分のplaceholderを配列の数だけ用意
@@ -56,7 +56,6 @@ class sqliteDb {
           flatArray.push(item);
         });
       });
-
       return new Promise((resolve, reject) => {
         db.serialize(() => {
           db.run(
@@ -67,6 +66,23 @@ class sqliteDb {
               else resolve();
             }
           );
+        });
+      });
+    }
+  }
+  // 更新（１件のみ）
+  update(tblKey, rec, cond) {
+    if (Object.keys(rec) && Object.keys(rec).length > 0 && cond) {
+      let setList = [];
+      for (let [key, val] of Object.entries(rec)) {
+        setList.push(`${key} = "${val}"`);
+      }
+      return new Promise((resolve, reject) => {
+        db.serialize(() => {
+          db.run(`update ${this.getTblName(tblKey)} set ${setList.join(", ")} where ${cond} `, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
         });
       });
     }
@@ -99,6 +115,27 @@ class sqliteDb {
         }
         resolve(rows);
       });
+    });
+  }
+  // 個別のやつ
+  extracted() {
+    // select distinct date_id,raw_2022.game_id,results_2022.game_no from raw_2022 left outer join results_2022 on raw_2022.game_id=results_2022.game_id where raw_2022.id="1";
+    return new Promise((resolve, reject) => {
+      db.all(
+        `select distinct date_id,${this.getTblName("RAW")}.game_id,${this.getTblName(
+          "RESULTS"
+        )}.game_no from ${this.getTblName("RAW")} left outer join ${this.getTblName("RESULTS")} on ${this.getTblName(
+          "RAW"
+        )}.game_id = ${this.getTblName("RESULTS")}.game_id where ${this.getTblName("RAW")}.id="1";`,
+        [],
+        (err, rows) => {
+          if (err) {
+            reject(err, rows);
+            return;
+          }
+          resolve(rows);
+        }
+      );
     });
   }
   getTblName(name) {

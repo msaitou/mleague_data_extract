@@ -5,23 +5,28 @@ contextBridge.exposeInMainWorld("eAPI", {
     console.log("22222222", a);
     ipcRenderer.invoke("dialog:openFile", a);
   },
-  accessDb: (tName, method, year, cond, rec) => {
-    console.log("accessdb", arguments[0]);
-    return ipcRenderer.invoke("accessDb", tName, method, year, cond, rec);
+  accessDb: (tName, method, year, params) => {
+    // console.log("accessdb", arguments[0]);
+    return ipcRenderer.invoke("accessDb", tName, method, year, params);
+  },
+  extractedData: (year) => {
+    // console.log("accessdb", arguments[0]);
+    return ipcRenderer.invoke("extractedData", year);
+  },
+  convert: (data) => {
+    // console.log("accessdb", arguments[0]);
+    return ipcRenderer.invoke("convert", data);
+  },
+  extract: (data) => {
+    // console.log("accessdb", arguments[0]);
+    return ipcRenderer.invoke("extract", data);
   },
 });
 // Node.jsのすべてのAPIがプリロード処理で利用可能です。
 // Chromeの拡張機能と同じサンドボックスを持っています。
 window.addEventListener("DOMContentLoaded", () => {
-  // DOM要素のテキストを変更します
-  const replaceText = (selector, text) => {
-    const element = document.getElementById(selector);
-    if (element) {
-      element.textContent = text;
-    }
-  };
-  for (const dependency of ["chrome", "node", "electron"]) {
-    // HTMLページ内の文言を差し替えます
-    replaceText(`${dependency}-version`, process.versions[dependency]);
-  }
+  ipcRenderer.on("test1", (_event, value) => {
+    console.log("ssssssssssssssssssssssss");
+    document.querySelector("#t3 .output").textContent = value;
+  });
 });

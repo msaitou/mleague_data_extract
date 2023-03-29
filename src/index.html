@@ -2,57 +2,292 @@
   <head>
     <meta charset="UTF-8" />
     <!-- https://developer.mozilla.org/ja/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: ; script-src 'self'" />
     <title>Mリーグ-データ抽出解析くん（haruzo専用）</title>
     <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css" />
+    <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <button id="key">てすと</button>
-    <button id="test">test</button>
-    <ul class="nav nav-tabs">
-      <li class="nav-item">
-        <a href="#t1" class="nav-link active" data-bs-toggle="tab">データ抽出</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#t2" data-bs-toggle="tab">整形＆出力</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#t3" data-bs-toggle="tab">抽出サマリー</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#t4" data-bs-toggle="tab">シーズンマスタ</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#t5" data-bs-toggle="tab">役マスタ</a>
-      </li>
-    </ul>
-    <div class="tab-content">
-      <div id="t1" class="tab-pane active">
-        de-tatyuushutu
-      </div>
-      <div id="t2" class="tab-pane">
-        seikeiI&syuturyoku
-      </div>
-      <div id="t3" class="tab-pane">
-        samari
-      </div>
-      <div id="t4" class="tab-pane">
-        si-zon
-      </div>
-      <div id="t5" class="tab-pane">
-        <div class="row">
-          <table class="table table-sm ">
-            <thead>
-              <tr>
-                <th>牌譜ビューアの役</th>
-                <th>変換後の役</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-
+    <div class="container-fluid mx-1 fs-7">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a href="#t1" class="nav-link active p-2" data-bs-toggle="tab">データ抽出</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link p-2" href="#t3" data-bs-toggle="tab">整形＆出力</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link p-2" href="#t4" data-bs-toggle="tab">シーズン</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link p-2" href="#t5" data-bs-toggle="tab">役</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link p-2" href="#t6" data-bs-toggle="tab">プレイヤー</a>
+        </li>
+      </ul>
+      <div class="tab-content">
+        <div id="t1" class="tab-pane active">
+          <div class="container-fluid mt-2">
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">年度 </label>
+                  <div class="col-4">
+                    <input class="form-control" name="year" placeholder="YYYY" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="offset-4 col-4">
+                    <span name="year" class="text-danger dnone text-nowrap">年度を入力してください</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="col-4 col-form-label">対象</label>
+                  <div class="col-6">
+                    <select class="form-select" name="kind">
+                      <option>日付(YYYYMMDD)</option>
+                      <option>URL</option>
+                      <option>取得可能全て</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="row">
+                    <label class="col-4 col-form-label">アカウント</label>
+                    <div class="col-6">
+                      <input class="form-control" name="account" />
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="row">
+                    <label class="col-4 col-form-label">パスワード</label>
+                    <div class="col-6">
+                      <input class="form-control" name="password" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label" for="reconvert_raw">再取得</label>
+                  <div class="col-8">
+                    <div class="input-group">
+                      <div class="input-group-text border-0 bg-white ps-0 pe-2">
+                        <input class="form-check-input mt-0" id="reconvert_raw" type="checkbox" />
+                      </div>
+                      <span class="input-group-text fs-8 py-0 px-0 border-0 bg-white">
+                        <label for="reconvert_raw" class="text-start">
+                          OFFの場合、既に取得しているデータはスキップします。<br />
+                          ONの場合、既に取得しているデータも取得し直します。
+                        </label>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label" for="reconvert_date">日程再取得</label>
+                  <div class="col-8">
+                    <div class="input-group">
+                      <div class="input-group-text border-0 bg-white ps-0 pe-2">
+                        <input class="form-check-input mt-0" id="reconvert_date" type="checkbox" />
+                      </div>
+                      <span class="input-group-text fs-8 py-0 px-0 border-0 bg-white">
+                        <label for="reconvert_date" class="text-start">
+                          OFFの場合、新しい日程が見つかれば差分を更新します。<br />
+                          ONの場合、既に取得している日程も取得し直します。
+                        </label>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4">
+                <button class="btn btn-sm btn-primary ps-2 extract">データ抽出</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="t3" class="tab-pane">
+          <div class="container-fluid mt-2">
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">年度 </label>
+                  <div class="col-4">
+                    <input class="form-control" name="year" placeholder="YYYY" />
+                  </div>
+                  <div class="col-4">
+                    <button class="btn btn-sm btn-secondary redisp">表示</button>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="offset-4 col-4">
+                    <span name="year" class="text-danger dnone text-nowrap">年度を入力してください</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label" for="reconvert">再整形</label>
+                  <div class="col-8">
+                    <div class="input-group">
+                      <div class="input-group-text border-0 bg-white ps-0 pe-2">
+                        <input class="form-check-input mt-0" id="reconvert" type="checkbox" />
+                      </div>
+                      <span class="input-group-text fs-8 py-0 px-0 border-0 bg-white">
+                        <label for="reconvert" class="text-start">
+                          OFFの場合、既に整形しているデータはスキップします。<br />
+                          ONの場合、既に整形しているデータは作り直します。
+                        </label>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row d-none" summary>
+              <div class="col">
+                抽出済み：<span class="recnum pe-2"></span>/ 整形済み：<span class="convertnum"></span>
+              </div>
+              <div class="col-4">
+                <button class="btn btn-sm btn-primary ps-2 output">整形＆出力</button>
+              </div>
+            </div>
+            <div class="row">
+              <table class="table table-sm table-striped table-hover fs-7 table-extracted ms-2">
+                <thead class="">
+                  <tr>
+                    <th>
+                      <label for="checkall"><input type="checkbox" id="checkall" />全選択/解除</label>
+                    </th>
+                    <th>試合No</th>
+                    <th>整形</th>
+                  </tr>
+                </thead>
+                <tbody class=""></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="t4" class="tab-pane">
+          <div class="container mt-2">
+            <div class="row mb-4">
+              <h6 class="fw-bold mode">新規</h6>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">年度 </label>
+                  <div class="col-6">
+                    <input name="rowid" type="hidden" />
+                    <input class="form-control" name="year" placeholder="YYYY" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">シーズンキー </label>
+                  <div class="col-6">
+                    <input class="form-control" name="url_key" />
+                  </div>
+                  <span class="fs-8 offset-4 col">牌譜ビューアのURLの?game_id=以降の文字列です</span>
+                  <span class="fs-8 offset-4 col"
+                    >2018のレギュラーシーズン（https://viewer.ml-log.jp/web/viewer?gameid=L001_S001_0003_01A）は、L001_S001です。
+                  </span>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">シーズン種別</label>
+                  <div class="col-6">
+                    <input class="form-control" name="kind" />
+                  </div>
+                  <span class="fs-8 offset-4 col">R:レギュラー、S:セミファイナル、F:ファイナル の英1文字</span>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">シーズン開始日 </label>
+                  <div class="col-6">
+                    <input class="form-control" name="start_date" placeholder="YYYYMMDD" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="d-flex justify-content-end">
+                  <a href="#" class="pe-4 new">新規で入力する</a>
+                  <button class="btn btn-sm btn-primary save">保存</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <h6 class="fw-bold">
+                登録済みのシーズン情報　<button class="btn btn-sm py-0 btn-secondary redisp">再表示</button>
+              </h6>
+              <table class="table table-sm table-striped table-hover fs-7 table-season ms-2">
+                <thead class="">
+                  <tr>
+                    <th>年度</th>
+                    <th>シーズンキー</th>
+                    <th>シーズン種別</th>
+                    <th>シーズン開始日</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody class=""></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="t5" class="tab-pane">
+          <div class="container mt-2">
+            <div class="row mb-4">
+              <h6 class="fw-bold mode">新規</h6>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">牌譜ビューアの役 </label>
+                  <div class="col-6">
+                    <input name="rowid" type="hidden" />
+                    <input class="form-control" name="official" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-4 col-form-label">変換後の役 </label>
+                  <div class="col-6">
+                    <input class="form-control" name="haruzo" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="d-flex justify-content-end">
+                  <a href="#" class="pe-4 new">新規で入力する</a>
+                  <button class="btn btn-sm btn-primary save">保存</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <h6 class="fw-bold">
+                登録済みの役一覧　<button class="btn btn-sm py-0 btn-secondary redisp">再表示</button>
+              </h6>
+              <table class="table table-sm table-striped table-hover fs-7 table-yaku ms-2">
+                <thead class="">
+                  <tr>
+                    <th>牌譜ビューアの役</th>
+                    <th>変換後の役</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody class=""></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

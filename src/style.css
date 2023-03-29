@@ -1,0 +1,62 @@
+.fs-7 {
+  font-size: 0.875rem !important;
+}
+.fs-8 {
+  font-size: 0.75rem !important;
+}
+thead,
+tbody {
+  display: block;
+}
+label {
+  text-align: right;
+}
+th {
+  font-weight: normal !important;
+}
+tbody {
+  overflow-y: scroll;
+}
+.table-yaku tbody {
+  max-height: 220px;
+  width: 380px;
+}
+.table-yaku th,
+.table-yaku td {
+  width: 120px;
+}
+.table-season tbody {
+  max-height: 220px;
+  width: 600px;
+}
+.table-season th,
+.table-season td {
+  width: 120px;
+}
+
+#t3 span[name="year"].dnone {
+  opacity: 0;
+  visibility: hidden;
+  /* display: none; */
+  transition: all 1.5s ease-out;
+}
+#t3 span[name="year"] {
+  visibility: visible;
+  opacity: 1;
+}
+.table-extracted tbody {
+  max-height: 220px;
+  width: 380px;
+}
+.table-extracted th,
+.table-extracted td {
+  width: 120px;
+}
+
+/* .form-check-input {
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+.form-check-input:checked[type="checkbox"] {
+  background-color: transparent;
+} */
