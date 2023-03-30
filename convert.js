@@ -1,4 +1,5 @@
 const logger = require("./initter.js").log();
+const DispLog = require("./initter.js").DispLog;
 global.log = logger;
 logger.debug(process.argv);
 const conf = require("config");
@@ -6,20 +7,22 @@ const fs = require("fs");
 const { D } = require("./lib/defain.js");
 const sqliteDb = require("./sql").sqliteDb;
 class Convert {
-  constructor() {}
+  dispLog;
+  constructor(mWin) {
+    this.dispLog = new DispLog(logger, mWin);
+  }
   async do(data) {
-    await start(data);
+    await start(data, this.dispLog);
   }
 }
 exports.Convert = Convert;
-async function start(p) {
+async function start(p, dispLog) {
   try {
-    // TODO 引数にどのデータを解析するか 2:year 3:日にち
+    dispLog.info("■■データ取得処理開始■■", JSON.stringify(p));
     let db = new sqliteDb();
     db.setYear(p.year);
     let dateMap = [];
     if (!p.targetList) {
-      // dateList = p[3].split(",");
       [
         "20221003",
         "20221004",
@@ -304,6 +307,7 @@ async function start(p) {
             case "agari":
               // yaku: "役",
               if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) args.splice(0, 1); // 不要なので削除
+              if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) args.splice(0, 1); // 不要なので削除
               // commentは勝敗とか
               let tmp = kyokuStats[nanichaMap[args[0]]];
               args.splice(0, 3); // 不要なので削除
@@ -486,12 +490,14 @@ async function start(p) {
           });
           await db.insert("RESULTS", saveRec);
         }
+        dispLog.info(`-> ${date}の ${gid} の整形完了`);
       }
     }
   } catch (e) {
-    logger.warn(e);
+    dispLog.warn(e);
     throw e;
   }
+  dispLog.info("■■データ取得処理終了■■");
 }
 let getHiniti = (b) => {
   return `${b.substr(0, 4)}/${Number(b.substr(4, 2)).toString()}/${Number(b.substr(6, 2)).toString()}`;

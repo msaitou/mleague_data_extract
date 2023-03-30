@@ -45,14 +45,25 @@ tbody {
   opacity: 1;
 }
 .table-extracted tbody {
-  max-height: 220px;
+  max-height: 150px;
   width: 380px;
 }
 .table-extracted th,
 .table-extracted td {
   width: 120px;
 }
-
+.form-control::placeholder {
+  color: #cccccc;
+}
+.mytoast {
+  z-index: 1000;
+}
+div.log {
+  max-height: 100px;
+  overflow-y: scroll;
+  z-index: 100000;
+  /* width: 380px; */
+}
 /* .form-check-input {
   appearance: auto;
   -webkit-appearance: auto;

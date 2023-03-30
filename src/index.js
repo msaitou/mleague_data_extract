@@ -3,92 +3,135 @@ const ID3 = "#t3"; // 整形＆出力タブ
 const ID4 = "#t4"; // シーズン
 const ID5 = "#t5"; // 役
 const ID6 = "#t6"; // プレイヤー
-// データ抽出タブ ID1------------------------------
-let id1FieldsList = ["game_no", "status"];
-let getId1data = async () => {
-  let year = document.querySelector(`${ID1} input[name="year"]`).value;
-  if (!year) {
-    let msg = document.querySelector(`${ID1} span[name="year"]`);
-    msg.classList.toggle("dnone");
-    setTimeout(() => {
-      msg.classList.toggle("dnone");
-    }, 2000);
+const ID2 = "#t2"; // アカウントタブ
+
+// toastクラスがついている要素にBootStrapのトーストを適用する
+var toastElList = [].slice.call(document.querySelectorAll(".toast"));
+var toastList = toastElList.map(function (toastEl) {
+  return new bootstrap.Toast(toastEl, {
+    // // オプション
+    // delay: 10000,
+  });
+});
+// ボタンをクリックしたときに実行される関数
+function showErrToast(mList) {
+  document.querySelector(`#liveToastErr .toast-body`).innerHTML = mList.join("<br>");
+  toastList[0].show();
+}
+function showOkToast(mList) {
+  document.querySelector(`#liveToastOk .toast-body`).innerHTML = mList.join("<br>");
+  toastList[1].show();
+}
+function toggleDisabled(isBool) {
+  document.querySelector(".loading").classList.toggle("d-none");
+  document.querySelectorAll("input, select,textarea,button, a").forEach((e) => {
+    e.disabled = isBool;
+  });
+}
+function clearDispLog() {
+  document.querySelector(".log>div").textContent = "";
+}
+// アカウントタブ ID2------------------------------
+let id2FieldsList = ["id", "password"];
+let getId2data = async () => {
+  let data = await window.eAPI.accessDb("ACCOUNT", "select", null, {
+    fields: `OID,${id2FieldsList.join(",")}`,
+  });
+  // console.log(data);
+  if (data.length) {
+    document.querySelector(`${ID2} input[name='rowid']`).value = data[0].rowid;
+    document.querySelector(`${ID2} [name="id"]`).value = data[0].id;
+    document.querySelector(`${ID2} [name="password"]`).value = data[0].password;
+  }
+};
+document.querySelector(`${ID2} button.save`).addEventListener("click", async () => {
+  let saveObjs = {};
+  let messageList = [];
+  id2FieldsList.forEach((f) => {
+    saveObjs[f] = document.querySelector(`${ID2} [name='${f}']`);
+    if (!saveObjs[f].value) {
+      saveObjs[f].focus();
+      switch (f) {
+        case id2FieldsList[0]:
+          messageList.push("アカウントを入力してください");
+          break;
+        case id2FieldsList[1]:
+          messageList.push("パスワードを入力してください");
+          break;
+      }
+    }
+  });
+  if (messageList.length) {
+    showErrToast(messageList);
     return;
   }
-  let data = await window.eAPI.extractedData(year);
-  let html = "";
-  console.log(data);
-  data.forEach((d) => {
-    html += `<tr>`;
-    html += `<td><input type="checkbox" class="form-checkbox" name="check" game_id="${d.game_id}"/></td>`;
-    html += id1FieldsList.reduce((l, f) => l + `<td ${f}>${d[f]}</td>`, ``);
-    html += `</tr>`;
-  });
-  // console.log(html);
-};
-document.querySelector(`${ID1} button.extract`).addEventListener("click", async () => {
-  let data = {
-    year: document.querySelector(`${ID1} [name="year"]`).value,
-    reconvert: document.querySelector(`${ID1} #reconvert`).checked,
-    targetList: {},
-  };
-  document.querySelectorAll(`${ID1} [name='check']`).forEach((el, i) => {
-    if (el.checked) {
-      // if (!data.reconvert && el.closest("tr").querySelector("[status]").textContent == "済") return;
-      let gameNo = el.closest("tr").querySelector("[game_no]").textContent;
-      let dateId = gameNo.substring(0, gameNo.length - 2);
-      if (!(dateId in data.targetList)) data.targetList[dateId] = [];
-      data.targetList[dateId].push(el.getAttribute("game_id"));
-    }
-  });
-  console.log(data);
-  let res = await window.eAPI.convert(data);
+  let data = { id: saveObjs.id.value, password: saveObjs.password.value };
+  let where = `rowid = ${document.querySelector(`${ID2} input[name='rowid']`).value}`;
+  console.log(data, where);
+  let res = await window.eAPI.accessDb("ACCOUNT", "update", null, { recs: data, cond: where });
   console.log(res);
-  for (let [tbl, lines] of Object.entries(res)) {
-    if (["STATUS","RESULTS"].indexOf(tbl) === -1) continue;
-    //IEとその他で処理の切り分け
-    if (navigator.appVersion.toString().indexOf(".NET") > 0) {
-      //IE 10+
-      window.navigator.msSaveBlob(res, fileName + ".pdf");
-    } else {
-      //aタグの生成
-      var a = document.createElement("a");
-      //レスポンスからBlobオブジェクト＆URLの生成
-      var blobUrl = window.URL.createObjectURL(new Blob([lines], { type: "text/csv" }));
-      //上で生成したaタグをアペンド
-      document.body.appendChild(a);
-      a.style = "display: none";
-      //BlobオブジェクトURLをセット
-      a.href = blobUrl;
-      //ダウンロードさせるファイル名の生成
-      a.download = tbl + ".csv";
-      //クリックイベント発火
-      a.click();
+  if (res && res.err) showErrToast([res.err]);
+  else showOkToast(["アカウント情報の更新に成功しました。"]);
+});
+// アカウントタブ ID2------------------------------
+// データ抽出タブ ID1------------------------------
+let id1FieldsList = ["year", "kind", "targets", "reconvert_raw", "reconvert_sche"];
+document.querySelector(`${ID1} button.extract`).addEventListener("click", async () => {
+  let saveObjs = {};
+  let messageList = [];
+  id1FieldsList.forEach((f) => {
+    saveObjs[f] = document.querySelector(`${ID1} [name='${f}']`);
+    if (["year", "targets"].indexOf(f) > -1 && !saveObjs[f].value) {
+      if (f == id1FieldsList[2] && saveObjs["kind"].value === "取得可能全て") return;
+      if (messageList.length === 0) saveObjs[f].focus();
+      switch (f) {
+        case id1FieldsList[0]:
+          messageList.push("年度を入力してください");
+          break;
+        case id1FieldsList[2]:
+          messageList.push("対象を入力してください");
+          break;
+      }
     }
+  });
+  if (messageList.length) {
+    showErrToast(messageList);
+    return;
   }
-
-  getId1data(); // 再表示
+  toggleDisabled(true);
+  clearDispLog();
+  let data = {};
+  for (let [f, o] of Object.entries(saveObjs)) {
+    if (["reconvert_raw", "reconvert_sche"].indexOf(f) > -1) data[f] = o.checked;
+    else if (["targets"].indexOf(f) > -1) data[f] = o.value.split("\n");
+    else data[f] = o.value;
+  }
+  console.log(data);
+  let res = await window.eAPI.extract(data);
+  console.log(res);
+  if (res && res.err) showErrToast([res.err]);
+  else showOkToast(["データの抽出が完了しました。"]);
+  toggleDisabled(false);
 });
 // データ抽出タブ ID1------------------------------
 // 整形＆出力タブ ID3------------------------------
 let id3FieldsList = ["game_no", "status"];
 let getId3data = async () => {
-  let year = document.querySelector(`${ID3} input[name="year"]`).value;
-  if (!year) {
-    let msg = document.querySelector(`${ID3} span[name="year"]`);
-    msg.classList.toggle("dnone");
-    setTimeout(() => {
-      msg.classList.toggle("dnone");
-    }, 2000);
+  let year = document.querySelector(`${ID3} input[name="year"]`);
+  if (!year.value) {
+    year.focus();
+    let messageList = [];
+    messageList.push("年度を入力してください");
+    showErrToast(messageList);
     return;
   }
-  let data = await window.eAPI.extractedData(year);
+  let data = await window.eAPI.extractedData(year.value);
   let html = "";
   console.log(data);
   data.forEach((d) => {
     html += `<tr>`;
     html += `<td><input type="checkbox" class="form-checkbox" name="check" game_id="${d.game_id}"/></td>`;
-    html += id1FieldsList.reduce((l, f) => l + `<td ${f}>${d[f]}</td>`, ``);
+    html += id3FieldsList.reduce((l, f) => l + `<td ${f}>${d[f]}</td>`, ``);
     html += `</tr>`;
   });
   // console.log(html);
@@ -125,11 +168,18 @@ document.querySelector(`${ID3} button.output`).addEventListener("click", async (
       data.targetList[dateId].push(el.getAttribute("game_id"));
     }
   });
+  toggleDisabled(true);
   console.log(data);
   let res = await window.eAPI.convert(data);
+  toggleDisabled(false);
   console.log(res);
+
+  if (res && res.err) {
+    showErrToast([res.err]);
+    return;
+  } else showOkToast(["データの抽出が完了しました。"]);
   for (let [tbl, lines] of Object.entries(res)) {
-    if (["STATUS","RESULTS"].indexOf(tbl) === -1) continue;
+    if (["STATUS", "RESULTS"].indexOf(tbl) === -1) continue;
     //IEとその他で処理の切り分け
     if (navigator.appVersion.toString().indexOf(".NET") > 0) {
       //IE 10+
@@ -189,8 +239,10 @@ let getId4data = async () => {
       let rowid = e.getAttribute("rowid");
       if (rowid) {
         where = `rowid = ${rowid}`;
-        let data = await window.eAPI.accessDb("SEASON", "delete", null, { cond: where });
-        console.log(data);
+        let res = await window.eAPI.accessDb("SEASON", "delete", null, { cond: where });
+        console.log(res);
+        if (res && res.err) showErrToast([res.err]);
+        else showOkToast(["1つのシーズン情報の削除に成功しました。"]);
         getId4data(); // 再表示
       }
     });
@@ -206,9 +258,36 @@ document.querySelector(`${ID4} a.new`).addEventListener("click", () => {
   document.querySelector(`${ID4} .mode`).classList.remove("text-warning");
 });
 document.querySelector(`${ID4} button.save`).addEventListener("click", async () => {
+  let saveObjs = {};
+  let messageList = [];
+  id4FieldsList.forEach((f) => {
+    saveObjs[f] = document.querySelector(`${ID4} input[name='${f}']`);
+    if (!saveObjs[f].value) {
+      if (messageList.length === 0) saveObjs[f].focus();
+      switch (f) {
+        case id4FieldsList[0]:
+          messageList.push("年度を入力してください");
+          break;
+        case id4FieldsList[1]:
+          messageList.push("シースンキーを入力してください");
+          break;
+        case id4FieldsList[2]:
+          messageList.push("シーズン種別を入力してください");
+          break;
+        case id4FieldsList[3]:
+          messageList.push("シーズン開始日を入力してください");
+          break;
+      }
+    }
+  });
+  if (messageList.length) {
+    showErrToast(messageList);
+    return;
+  }
+
   let saveData = [[]];
   id4FieldsList.forEach((f) => {
-    saveData[0].push(document.querySelector(`${ID4} input[name='${f}']`).value);
+    saveData[0].push(saveObjs[f].value);
   });
   let where = "";
   let method = "insert";
@@ -222,8 +301,10 @@ document.querySelector(`${ID4} button.save`).addEventListener("click", async () 
     });
     saveData = tmp;
   }
-  let data = await window.eAPI.accessDb("SEASON", method, null, { recs: saveData, cond: where });
-  console.log(data);
+  let res = await window.eAPI.accessDb("SEASON", method, null, { recs: saveData, cond: where });
+  console.log(res);
+  if (res && res.err) showErrToast([res.err]);
+  else showOkToast(["シーズン情報の更新に成功しました。"]);
   document.querySelector(`${ID4} a.new`).click(); // 初期化
   getId4data(); // 再表示
 });
@@ -261,8 +342,10 @@ let getId5data = async () => {
       let rowid = e.getAttribute("rowid");
       if (rowid) {
         where = `rowid = ${rowid}`;
-        let data = await window.eAPI.accessDb("YAKU", "delete", null, { cond: where });
-        console.log(data);
+        let res = await window.eAPI.accessDb("YAKU", "delete", null, { cond: where });
+        console.log(res);
+        if (res && res.err) showErrToast([res.err]);
+        else showOkToast(["1つの役の削除に成功しました。"]);
         getId5data(); // 再表示
       }
     });
@@ -294,8 +377,9 @@ document.querySelector(`${ID5} button.save`).addEventListener("click", async () 
     });
     saveData = tmp;
   }
-  let data = await window.eAPI.accessDb("YAKU", method, null, { recs: saveData, cond: where });
-  console.log(data);
+  let res = await window.eAPI.accessDb("YAKU", method, null, { recs: saveData, cond: where });
+  if (res && res.err) showErrToast([res.err]);
+  else showOkToast(["役情報の更新に成功しました。"]);
   getId5data(); // 再表示
 });
 // 役タブ ID5------------------------------
@@ -305,6 +389,9 @@ document.querySelectorAll(`li.nav-item>a`).forEach((e, i) => {
   let tabId = e.getAttribute("href");
   switch (tabId) {
     case ID1:
+      break;
+    case ID2:
+      getId2data();
       break;
     case ID3:
       break;

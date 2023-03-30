@@ -6,19 +6,15 @@ contextBridge.exposeInMainWorld("eAPI", {
     ipcRenderer.invoke("dialog:openFile", a);
   },
   accessDb: (tName, method, year, params) => {
-    // console.log("accessdb", arguments[0]);
     return ipcRenderer.invoke("accessDb", tName, method, year, params);
   },
   extractedData: (year) => {
-    // console.log("accessdb", arguments[0]);
     return ipcRenderer.invoke("extractedData", year);
   },
   convert: (data) => {
-    // console.log("accessdb", arguments[0]);
     return ipcRenderer.invoke("convert", data);
   },
   extract: (data) => {
-    // console.log("accessdb", arguments[0]);
     return ipcRenderer.invoke("extract", data);
   },
 });
@@ -26,7 +22,11 @@ contextBridge.exposeInMainWorld("eAPI", {
 // Chromeの拡張機能と同じサンドボックスを持っています。
 window.addEventListener("DOMContentLoaded", () => {
   ipcRenderer.on("test1", (_event, value) => {
-    console.log("ssssssssssssssssssssssss");
-    document.querySelector("#t3 .output").textContent = value;
+    document.querySelector(" .log>div").textContent += value;
+  });
+  ipcRenderer.on("dispLog", (_event, value) => {
+    let div = document.querySelector(" .log>div");
+    div.innerHTML += value +"<br>";
+    div.scrollIntoView(false);
   });
 });

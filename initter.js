@@ -48,7 +48,23 @@ const thisLog = () => {
   return logger;
 };
 exports.log = thisLog;
-
+class DispLog{
+  log;
+  mWin;
+  constructor(log, mWin) {
+    this.log = log;
+    this.mWin = mWin;
+  }
+  info(...mes) {
+    this.log.info(mes);
+    if (this.mWin) this.mWin.webContents.send("dispLog", mes); 
+  }
+  warn(...mes) {
+    this.log.warn(mes);
+    if (this.mWin) this.mWin.webContents.send("dispLog", mes); 
+  }
+}
+exports.DispLog = DispLog;
 const getDriverPath = async function () {
   let log = getLogInstance();
   try {

@@ -1,4 +1,5 @@
 const logger = require("./initter.js").log();
+const DispLog = require("./initter.js").DispLog;
 global.log = logger;
 logger.debug(process.argv);
 const conf = require("config");
@@ -8,7 +9,7 @@ const { BaseWebDriverWrapper } = require("./base-webdriver-wrapper");
 
 async function start(p) {
   return new Promise(async (resolve, reject) => {
-    logger.info(33);
+    logger.info("START^-------------");
     let Web = new WebCls();
     await Web.main(p);
     resolve(true);
@@ -27,11 +28,13 @@ async function start(p) {
 
 class WebCls {
   logger;
-  constructor() {
+  dispLog;
+  constructor(mWin) {
     this.logger = global.log;
+    this.dispLog = new DispLog(this.logger, mWin);
   }
   async main(p) {
-    logger.info("main---");
+    this.dispLog.info("■■データ取得処理開始■■", JSON.stringify(p));
     let driver = null;
     try {
       logger.debug(p);
@@ -44,36 +47,49 @@ class WebCls {
       let scheUrl = "https://m-league.jp/games/"; // defaultのURL
       let defoYear = baseDay.getFullYear();
       if (today < baseDay) defoYear--;
-      if (defoYear != p[2]) scheUrl += `${p[2]}-season`;
-      let params = { forceFlag: { raw: false, sche: false } }; // 画面から受け取る引数
+      if (defoYear != p.year) scheUrl += `${p.year}-season`;
+      let params = { forceFlag: { raw: p.reconvert_raw, sche: p.reconvert_sche } }; // 画面から受け取る引数
       // 必ず最初に、日程を抽出し差分を更新　引数のyear に対象の年度があるので、その年度の日程を抽出
       let db = new sqliteDb();
-      db.setYear(p[2]);
+      db.setYear(p.year);
       await db.init();
       // https://m-league.jp/games/2020-season　過去の場合
-      let pAna = new PreAnalyzer(db, params);
+      let pAna = new PreAnalyzer(db, params, this.dispLog);
       try {
         driver = await pAna.exec(scheUrl);
       } catch (e) {
         logger.warn(e);
       }
-      let urls = [
-        // "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_01A"
-      ];
-      // urls.push("https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_01A");
-      // urls.push("https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_02A");
-      let dates = ["20181002"];
-      // どの試合のデータを抽出するか
       let urlMap = {};
-      if (urls.length) {
-        urlMap = await getUrlMapFromGameId(db, urls);
-        this.logger.debug(urlMap);
-      } else {
-        urlMap = await getUrlMapFromDate(db, dates);
-        this.logger.debug(urlMap);
+      // p["targets"] = [
+      //   // "https://viewer.ml-log.jp/web/viewer?gameid=L001_S013_0001_01A"
+      // ];
+      // // = [
+      // //   // "20181002"
+      // // ];
+      // どの試合のデータを抽出するか
+      switch (p.kind) {
+        case "URL":
+          urlMap = await getUrlMapFromGameId(db, p.targets);
+          this.logger.debug(urlMap);
+          break;
+        case "日付(YYYYMMDD)":
+          urlMap = await getUrlMapFromDate(db, p.targets);
+          this.logger.debug(urlMap);
+          break;
+        case "取得可能全て":
+          let sches = await db.select("SCHE");
+          let dates = sches.reduce((p, c) => {
+            p.push(c.data);
+            return p;
+          }, []);
+          urlMap = await getUrlMapFromDate(db, dates);
+          this.logger.debug(urlMap);
+          break;
+        default:
+          throw "抽出対象が不明です";
       }
-      // return;
-      let ana = new Analyzer(db, driver, params);
+      let ana = new Analyzer(db, driver, params, this.dispLog);
       try {
         let aca = await db.select("ACCOUNT");
         if (aca.length) {
@@ -81,141 +97,49 @@ class WebCls {
         } else throw "アカウントがないので無理です";
       } catch (e) {
         logger.warn(e);
+        throw e;
       }
     } catch (e) {
       logger.warn(e);
+      this.dispLog.warn(e);
+      throw e;
     } finally {
       if (driver) await driver.quit();
+      this.dispLog.info("■■データ取得処理終了■■");
     }
   }
 }
 // 最初の処理。DBのtableやSCHEの取得
 class PreAnalyzer extends BaseWebDriverWrapper {
   params = {};
-  constructor(db, params) {
+  dispLog;
+  constructor(db, params, dispLog) {
     super(db);
     this.logger.info(`constructor`);
     this.params = params;
+    this.dispLog = dispLog;
   }
   async exec(pUrl) {
     this.logger.info("きた？" + pUrl);
+    this.dispLog.info("■スケジュールの取得開始■");
     let forceFlag = this.params.forceFlag; // 強制フラグ（raw:生データ取得,sche:スケジュール）
     try {
       if (!this.getDriver()) {
         this.setDriver(await this.webDriver(null, conf.chrome.headless));
       }
       let scheList = [];
-      if (true) {
-        await this.driver.get(pUrl); // このページを解析
-        // let page = await this.driver.getPageSource();
-        // logger.info(page);
-        let se = ["div.c-modal2"];
-        let els = await this.driver.executeScript(`return document.querySelectorAll('${se[0]}');`);
-        for (let el of els) {
-          let id = await el.getAttribute("id");
-          let key = id.split("key")[1];
-          let reg = /^\d{8}$/;
-          if (reg.test(key)) scheList.push(key);
-        }
-        this.logger.debug(scheList);
-      } else {
-        scheList = [
-          "20221003",
-          "20221004",
-          "20221006",
-          "20221007",
-          "20221010",
-          "20221011",
-          "20221013",
-          "20221014",
-          "20221017",
-          "20221018",
-          "20221020",
-          "20221021",
-          "20221024",
-          "20221025",
-          "20221027",
-          "20221028",
-          "20221031",
-          "20221101",
-          "20221103",
-          "20221104",
-          "20221107",
-          "20221108",
-          "20221110",
-          "20221111",
-          "20221114",
-          "20221115",
-          "20221117",
-          "20221118",
-          "20221121",
-          "20221122",
-          "20221124",
-          "20221125",
-          "20221128",
-          "20221129",
-          "20221201",
-          "20221202",
-          "20221205",
-          "20221206",
-          "20221208",
-          "20221209",
-          "20221212",
-          "20221213",
-          "20221215",
-          "20221216",
-          "20221219",
-          "20221220",
-          "20221222",
-          "20221223",
-          "20230102",
-          "20230103",
-          "20230105",
-          "20230106",
-          "20230109",
-          "20230110",
-          "20230112",
-          "20230113",
-          "20230116",
-          "20230117",
-          "20230119",
-          "20230120",
-          "20230123",
-          "20230124",
-          "20230126",
-          "20230127",
-          "20230130",
-          "20230131",
-          "20230202",
-          "20230203",
-          "20230206",
-          "20230207",
-          "20230209",
-          "20230210",
-          "20230213",
-          "20230214",
-          "20230216",
-          "20230217",
-          "20230220",
-          "20230221",
-          "20230223",
-          "20230224",
-          "20230227",
-          "20230228",
-          "20230302",
-          "20230303",
-          "20230306",
-          "20230307",
-          "20230309",
-          "20230310",
-          "20230313",
-          "20230314",
-          "20230316",
-          "20230317",
-          "20230320",
-        ];
+      await this.driver.get(pUrl); // このページを解析
+      // let page = await this.driver.getPageSource();
+      // logger.info(page);
+      let se = ["div.c-modal2"];
+      let els = await this.driver.executeScript(`return document.querySelectorAll('${se[0]}');`);
+      for (let el of els) {
+        let id = await el.getAttribute("id");
+        let key = id.split("key")[1];
+        let reg = /^\d{8}$/;
+        if (reg.test(key)) scheList.push(key);
       }
-      // TODO SCHEを強制更新する引数があれば、すべてdeleteしてから全部インサート、
+      this.logger.debug(scheList);
       // 今取り込み済みのSCHEデータを取得して、そこに含まれていないデータのみインサート
       let recs = await this.db.select("SCHE");
       let orede_no_offset = 1; // 最初は1
@@ -234,26 +158,30 @@ class PreAnalyzer extends BaseWebDriverWrapper {
           savedRec.push([date, i + orede_no_offset]);
         });
         await this.db.insert("SCHE", savedRec);
-        this.logger.info("SCHEを更新しました。");
+        this.dispLog.info("-> SCHEを更新しました。");
       }
+      else this.dispLog.info("-> 更新するSCHEはありませんでした。");
     } catch (e) {
-      this.logger.info(e);
+      this.dispLog.warn(e);
       await this.quitDriver();
     }
+    this.dispLog.info("■スケジュールの取得終了■");
     return this.driver;
   }
 }
 class Analyzer extends BaseWebDriverWrapper {
   baseUrl = "https://m-league.jp/games/";
   params = {};
-  constructor(db, driver, params) {
+  dispLog;
+  constructor(db, driver, params, dispLog) {
     super(db);
     this.setDriver(driver);
     this.logger.info(`constructor`);
     this.params = params;
+    this.dispLog = dispLog;
   }
   async exec(urlMap, aca) {
-    this.logger.info("きた？" + urlMap);
+    this.dispLog.info("■対象データの抽出開始■" ,JSON.stringify(urlMap));
     let forceFlag = this.params.forceFlag; // 強制フラグ（raw:生データ取得,sche:スケジュール）
     try {
       if (!this.getDriver()) this.setDriver(await this.webDriver());
@@ -281,7 +209,7 @@ class Analyzer extends BaseWebDriverWrapper {
             let tmp = await this.db.select("TMP"); // 一回やれば、しばらくキャッシュされるので、１２時間過ぎたらやり直してみる
             let reFlag = true;
             if (tmp.length && tmp[0].date) {
-              if (new Date().getTime() - new Date(tmp[0].date) > 60 * 60 * 1000) reFlag = false;
+              if (new Date().getTime() - new Date(tmp[0].date) < 12 * 60 * 60 * 1000) reFlag = false;
             }
             if (reFlag) {
               // 最初だけちゃんと画面を操作して開く必要あり
@@ -334,7 +262,7 @@ class Analyzer extends BaseWebDriverWrapper {
                 let target = line.substring(line.indexOf("'[{") + 1, line.lastIndexOf("}]'") + "}]'".length - 1);
                 let result = JSON.parse(target);
                 target = undefined; // メモリ節約できるかな
-                this.logger.debug(result);
+                // this.logger.debug(result);
                 let saveRec = [];
                 result.forEach((r) => {
                   saveRec.push([currentGameId, dateId, r.time, r.id, r.cmd, JSON.stringify(r.args)]);
@@ -346,11 +274,13 @@ class Analyzer extends BaseWebDriverWrapper {
           }
           await this.driver.close(); // このタブを閉じて
           await this.driver.switchTo().window(wid); // 元のウインドウIDにスイッチ
+          this.dispLog.info(`${dateId}の ${currentGameId} のデータ抽出完了`);
         }
       }
     } catch (e) {
-      this.logger.info(e);
+      this.dispLog.warn(e);
     }
+    this.dispLog.info("■対象データの抽出終了■" );
     return this.driver;
   }
 }
@@ -366,6 +296,7 @@ async function getUrlMapFromDate(db, dates) {
   if (!scheRecs.length) throw `スケジュールが見つかりません`;
 
   for (let dateStr of dates) {
+    if (!dateStr) continue;
     let targetSeason = "";
     for (let rec of seasonRecs) {
       // 後が優先（R<S<F）
@@ -393,12 +324,12 @@ async function getUrlMapFromDate(db, dates) {
   }
   return urlsMap;
 }
-// TODO SEASONの情報は、GUI側から登録するように
 // gameIdから日程(YYYYMMDD)を返す
 async function getUrlMapFromGameId(db, urls) {
   let urlsMap = {},
     tmpMap = {};
   for (let url of urls) {
+    if (!url) continue;
     let game_id = url.substr(url.lastIndexOf("=") + 1);
     if (!game_id) throw `対象外のURLが含まれています（${url}）`;
     let tmpKey = game_id.substring(0, game_id.lastIndexOf("_")); // 仮のキー。dateと対応
@@ -423,6 +354,17 @@ async function getUrlMapFromGameId(db, urls) {
   }
   return urlsMap;
 }
+exports.WebCls = WebCls;
+
 if (process.argv.length > 2) {
-  start(process.argv);
+  // {
+  //   kind: "日付(YYYYMMDD)";or URL 取得可能全て
+  //   reconvert_raw: false;
+  //   reconvert_sche: false;
+  //   targets: ["20181004"];
+  //   year: "2018";
+  // }
+  start({ year: process.argv[2], targetList: process.argv[3], reconvert: process.argv[4] });
+} else if (process.argv[0].indexOf("electron") > -1) {
+  // electronから呼ばれたら無視
 } else logger.warn("引数が足りません");
