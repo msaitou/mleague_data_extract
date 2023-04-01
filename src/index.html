@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css" />
     <link rel="stylesheet" href="./style.css" />
   </head>
-  <body>
+  <body class="overflow-hidden">
     <div class="container-fluid mx-1 fs-7">
       <ul class="nav nav-tabs">
         <li class="nav-item">
@@ -24,7 +24,7 @@
           <a class="nav-link p-2" href="#t5" data-bs-toggle="tab">役</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link p-2" href="#t6" data-bs-toggle="tab">プレイヤー</a>
+          <a class="nav-link p-2" href="#t6" data-bs-toggle="tab">選手</a>
         </li>
         <li class="nav-item">
           <a class="nav-link p-2" href="#t2" data-bs-toggle="tab">アカウント</a>
@@ -32,17 +32,17 @@
       </ul>
       <div class="tab-content">
         <div id="t1" class="tab-pane active">
-          <div class="container-fluid mt-2">
+          <div class="container-fluid mt-2 mx-3">
             <div class="row mb-4">
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">年度 </label>
+                  <label class="col-3 col-form-label">年度 </label>
                   <div class="col-4">
                     <input class="form-control" name="year" placeholder="YYYY" />
                   </div>
                 </div>
                 <div class="row">
-                  <label class="col-4 col-form-label">対象</label>
+                  <label class="col-3 col-form-label">対象</label>
                   <div class="col-4">
                     <select class="form-select fs-7" name="kind">
                       <option>日付(YYYYMMDD)</option>
@@ -54,14 +54,14 @@
                     <button class="btn btn-sm btn-primary ps-2 extract">データ抽出</button>
                   </div>
 
-                  <div class="offset-4 col-8">
-                    <textarea class="form-control" name="targets" rows="5"></textarea>
+                  <div class="offset-3 col-8">
+                    <textarea class="form-control" name="targets" rows="5" placeholder="複数入力する場合は改行してください"></textarea>
                   </div>
                 </div>
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label" for="reconvert_raw">再取得</label>
+                  <label class="col-3 col-form-label" for="reconvert_raw">再取得</label>
                   <div class="col-8">
                     <div class="input-group">
                       <div class="input-group-text border-0 bg-white ps-0 pe-2">
@@ -79,7 +79,7 @@
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label" for="reconvert_sche">日程再取得</label>
+                  <label class="col-3 col-form-label" for="reconvert_sche">日程再取得</label>
                   <div class="col-8">
                     <div class="input-group">
                       <div class="input-group-text border-0 bg-white ps-0 pe-2">
@@ -101,15 +101,14 @@
                 </div>
               </div>
             </div>
-            <div class="row"></div>
           </div>
         </div>
         <div id="t3" class="tab-pane">
-          <div class="container-fluid mt-2">
+          <div class="container-fluid mt-2 mx-3">
             <div class="row mb-4">
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">年度 </label>
+                  <label class="col-3 col-form-label">年度 </label>
                   <div class="col-4">
                     <input class="form-control" name="year" placeholder="YYYY" />
                   </div>
@@ -118,14 +117,14 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="offset-4 col-4">
+                  <div class="offset-3 col-4">
                     <span name="year" class="text-danger dnone text-nowrap">年度を入力してください</span>
                   </div>
                 </div>
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label" for="reconvert">再整形</label>
+                  <label class="col-3 col-form-label" for="reconvert">再整形</label>
                   <div class="col-8">
                     <div class="input-group">
                       <div class="input-group-text border-0 bg-white ps-0 pe-2">
@@ -146,7 +145,7 @@
               <div class="col">
                 抽出済み：<span class="recnum pe-2"></span>/ 整形済み：<span class="convertnum"></span>
               </div>
-              <div class="col-4">
+              <div class="col-3">
                 <button class="btn btn-sm btn-primary ps-2 output">整形＆出力</button>
               </div>
             </div>
@@ -167,12 +166,12 @@
           </div>
         </div>
         <div id="t4" class="tab-pane">
-          <div class="container mt-2">
+          <div class="container-fluid mt-2 mx-3">
             <div class="row mb-4">
               <h6 class="fw-bold mode">新規</h6>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">年度 </label>
+                  <label class="col-3 col-form-label">年度 </label>
                   <div class="col-6">
                     <input name="rowid" type="hidden" />
                     <input class="form-control" name="year" placeholder="YYYY" />
@@ -181,34 +180,34 @@
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">シーズンキー </label>
+                  <label class="col-3 col-form-label">シーズンキー </label>
                   <div class="col-6">
                     <input class="form-control" name="url_key" />
                   </div>
-                  <span class="fs-8 offset-4 col">牌譜ビューアのURLの?game_id=以降の文字列です</span>
-                  <span class="fs-8 offset-4 col"
+                  <span class="fs-8 offset-3 col-6">牌譜ビューアのURLの?game_id=以降の文字列です</span>
+                  <span class="fs-8 offset-3 col-6"
                     >2018のレギュラーシーズン（https://viewer.ml-log.jp/web/viewer?gameid=L001_S001_0003_01A）は、L001_S001です。
                   </span>
                 </div>
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">シーズン種別</label>
+                  <label class="col-3 col-form-label">シーズン種別</label>
                   <div class="col-6">
                     <input class="form-control" name="kind" />
                   </div>
-                  <span class="fs-8 offset-4 col">R:レギュラー、S:セミファイナル、F:ファイナル の英1文字</span>
+                  <span class="fs-8 offset-3 col-6">R:レギュラー、S:セミファイナル、F:ファイナル の英1文字</span>
                 </div>
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">シーズン開始日 </label>
+                  <label class="col-3 col-form-label">シーズン開始日 </label>
                   <div class="col-6">
                     <input class="form-control" name="start_date" placeholder="YYYYMMDD" />
                   </div>
                 </div>
               </div>
-              <div class="col-12">
+              <div class="col-10">
                 <div class="d-flex justify-content-end">
                   <a href="#" class="pe-4 new">新規で入力する</a>
                   <button class="btn btn-sm btn-primary save">保存</button>
@@ -235,12 +234,12 @@
           </div>
         </div>
         <div id="t5" class="tab-pane">
-          <div class="container mt-2">
+          <div class="container-fluid mt-2 mx-3">
             <div class="row mb-4">
               <h6 class="fw-bold mode">新規</h6>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">牌譜ビューアの役 </label>
+                  <label class="col-3 col-form-label">牌譜ビューアの役 </label>
                   <div class="col-6">
                     <input name="rowid" type="hidden" />
                     <input class="form-control" name="official" />
@@ -249,13 +248,13 @@
               </div>
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">変換後の役 </label>
+                  <label class="col-3 col-form-label">変換後の役 </label>
                   <div class="col-6">
                     <input class="form-control" name="haruzo" />
                   </div>
                 </div>
               </div>
-              <div class="col-12">
+              <div class="col-10">
                 <div class="d-flex justify-content-end">
                   <a href="#" class="pe-4 new">新規で入力する</a>
                   <button class="btn btn-sm btn-primary save">保存</button>
@@ -279,28 +278,95 @@
             </div>
           </div>
         </div>
+        <div id="t6" class="tab-pane">
+          <div class="container-fluid mt-2 mx-3">
+            <div class="row mb-4">
+              <h6 class="fw-bold mode">新規</h6>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-3 col-form-label">選手No </label>
+                  <div class="col-6">
+                    <input name="rowid" type="hidden" />
+                    <input class="form-control" name="no" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-3 col-form-label">姓/名 </label>
+                  <div class="col-3 pe-0">
+                    <input class="form-control" name="last" />
+                  </div>
+                  <div class="col-3 ps-0">
+                    <input class="form-control" name="first" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-3 col-form-label">チームID</label>
+                  <div class="col-6">
+                    <input class="form-control" name="teamId" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <label class="col-3 col-form-label">チーム名</label>
+                  <div class="col-6">
+                    <input class="form-control" name="teamName" />
+                  </div>
+                </div>
+              </div>
+              <div class="col-10">
+                <div class="d-flex justify-content-end">
+                  <a href="#" class="pe-4 new">新規で入力する</a>
+                  <button class="btn btn-sm btn-primary save">保存</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <h6 class="fw-bold">
+                登録済みの選手一覧　<button class="btn btn-sm py-0 btn-secondary redisp">再表示</button>
+              </h6>
+              <table class="table table-sm table-striped table-hover fs-7 table-members ms-2">
+                <thead class="">
+                  <tr>
+                    <th>選手No</th>
+                    <th>姓</th>
+                    <th>名</th>
+                    <th>チームID</th>
+                    <th teamName>チーム名</th>
+                    <th ope>操作</th>
+                  </tr>
+                </thead>
+                <tbody class=""></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div id="t2" class="tab-pane">
           <div class="container-fluid mt-2">
             <div class="row mb-4">
               <div class="col-12">
                 <div class="row">
-                  <label class="col-4 col-form-label">アカウント</label>
+                  <label class="col-3 col-form-label">アカウント</label>
                   <div class="col-6">
                     <input name="rowid" type="hidden" />
                     <input class="form-control" name="id" />
                   </div>
                 </div>
                 <div class="row">
-                  <label class="col-4 col-form-label">パスワード</label>
+                  <label class="col-3 col-form-label">パスワード</label>
                   <div class="col-6">
                     <input class="form-control" name="password" type="password" />
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <span class="offset-4 col-8 fs-8"> Mリーグオフィシャルサポーターのアカウントです。 </span>
+                  <span class="offset-3 col-8 fs-8"> Mリーグオフィシャルサポーターのアカウントです。 </span>
                 </div>
                 <div class="row">
-                  <div class="col-12">
+                  <div class="col-10">
                     <div class="d-flex justify-content-end">
                       <button class="btn btn-sm btn-primary save">保存</button>
                     </div>

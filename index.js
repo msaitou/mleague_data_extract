@@ -124,9 +124,7 @@ class PreAnalyzer extends BaseWebDriverWrapper {
     this.dispLog.info("■スケジュールの取得開始■");
     let forceFlag = this.params.forceFlag; // 強制フラグ（raw:生データ取得,sche:スケジュール）
     try {
-      if (!this.getDriver()) {
-        this.setDriver(await this.webDriver(null, conf.chrome.headless));
-      }
+      if (!this.getDriver()) this.setDriver(await this.webDriver(null, conf.chrome.headless));
       let scheList = [];
       await this.driver.get(pUrl); // このページを解析
       // let page = await this.driver.getPageSource();
@@ -151,6 +149,9 @@ class PreAnalyzer extends BaseWebDriverWrapper {
           if (matchIndex > -1) scheList.splice(matchIndex, 1);
         });
       }
+      else if(forceFlag.sche) {
+        await this.db.delete("SCHE"); // 一旦全削除
+      }
       if (scheList.length) {
         scheList.sort(); // 文字列の昇順に並び替え
         let savedRec = [];
@@ -159,8 +160,7 @@ class PreAnalyzer extends BaseWebDriverWrapper {
         });
         await this.db.insert("SCHE", savedRec);
         this.dispLog.info("-> SCHEを更新しました。");
-      }
-      else this.dispLog.info("-> 更新するSCHEはありませんでした。");
+      } else this.dispLog.info("-> 更新するSCHEはありませんでした。");
     } catch (e) {
       this.dispLog.warn(e);
       await this.quitDriver();
@@ -181,10 +181,10 @@ class Analyzer extends BaseWebDriverWrapper {
     this.dispLog = dispLog;
   }
   async exec(urlMap, aca) {
-    this.dispLog.info("■対象データの抽出開始■" ,JSON.stringify(urlMap));
+    this.dispLog.info("■対象データの抽出開始■", JSON.stringify(urlMap));
     let forceFlag = this.params.forceFlag; // 強制フラグ（raw:生データ取得,sche:スケジュール）
     try {
-      if (!this.getDriver()) this.setDriver(await this.webDriver());
+      if (!this.getDriver()) this.setDriver(await this.webDriver(null, conf.chrome.headless));
       await this.openUrl(this.baseUrl);
       await this.sleep(1000);
       let se = ["div.p-loginMenu", "#mail", "#password", "div.p-loginMenu__btn> button", "p.js-personalMenu__title"];
@@ -280,7 +280,7 @@ class Analyzer extends BaseWebDriverWrapper {
     } catch (e) {
       this.dispLog.warn(e);
     }
-    this.dispLog.info("■対象データの抽出終了■" );
+    this.dispLog.info("■対象データの抽出終了■");
     return this.driver;
   }
 }

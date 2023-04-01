@@ -131,6 +131,7 @@ async function start(p, dispLog) {
       if (c.official) p[c.official] = c.haruzo;
       return p;
     }, {});
+    let memberRecs = await db.select("MEMBERS");  // メンバー
     // シーズン判別で、seasonも引いとく
     let seasonRecs = await db.select("SEASON", `year = "${db.year}"`);
     seasonRecs.sort((a, b) => {
@@ -177,7 +178,7 @@ async function start(p, dispLog) {
             let exists = await db.select("RESULTS", `game_id = "${rec.game_id}"`);
             if (exists.length && !p.reconvert) break;
             if (p.reconvert) {
-              await db.delete("STATUS", `game_id = "${rec.game_id}"`);
+              await db.delete("STATS", `game_id = "${rec.game_id}"`);
               await db.delete("RESULTS", `game_id = "${rec.game_id}"`);
             }
           }
@@ -188,7 +189,8 @@ async function start(p, dispLog) {
               // L001_S013_0001_01A|["B0","魚谷 侑未","user","T005"]
               // L001_S013_0001_01A|["C0","佐々木 寿人","user","T003"]
               // L001_S013_0001_01A|["D0","鈴木 優","user","T007"]
-              players[args[0]] = D.MEMBER_LIST.filter((m) => m.full == args[1] || m.last + m.first == args[1])[0];
+              // players[args[0]] = D.MEMBER_LIST.filter((m) => m.full == args[1] || m.last + m.first == args[1])[0];
+              players[args[0]] = memberRecs.filter((m) => m.full == args[1] || m.last + m.first == args[1])[0];
               break;
             case "gamestart":
               if (Object.keys(players).length != 4) throw "playerが４人いません";
@@ -213,13 +215,13 @@ async function start(p, dispLog) {
               )[0];
               currentKyoku.tumi = Number(args[2]);
               currentKyoku.kyoutaku = args[2] != "0" ? Number(args[3]) : 0;
-              let tmpStatus = Object.keys(D.STATUS_KEY_MAP).reduce((a, b) => {
+              let tmpStats = Object.keys(D.STATS_KEY_MAP).reduce((a, b) => {
                 a[b] = "";
                 return a;
               }, {});
               for (let [key, player] of Object.entries(players)) {
                 let kyokuRec = {
-                  ...tmpStatus,
+                  ...tmpStats,
                   nanicha: key, // 保存しない、このループでの紐付け情報
                   game_id: gameCommon.game_id,
                   game_no: gameCommon.game_no,
@@ -483,7 +485,7 @@ async function start(p, dispLog) {
             delete r.nanicha;
             saveRec.push([...Object.values(r)]);
           });
-          await db.insert("STATUS", saveRec);
+          await db.insert("STATS", saveRec);
           saveRec = [];
           result.forEach((r) => {
             saveRec.push([...Object.values(r)]);

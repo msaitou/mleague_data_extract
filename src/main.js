@@ -19,7 +19,7 @@ const createWindow = () => {
   mWin.setMenuBarVisibility(false);
   // メインウィンドウに表示するURLを指定します
   // （今回はmain.jsと同じディレクトリのindex.html）
-  mWin.loadFile("index.html");
+  mWin.loadFile("src/index.html");
 
   // // デベロッパーツールの起動
   // mainWindow.webContents.openDevTools();
@@ -119,7 +119,7 @@ async function convert(e, data) {
     Object.values(data.targetList).forEach((d) => {
       idList = idList.concat(d);
     });
-    for (let tbl of ["STATUS", "RESULTS"]) {
+    for (let tbl of ["STATS", "RESULTS"]) {
       let recs = await accessDb(null, tbl, "select", data.year, { cond: `game_id in ('${idList.join("','")}')` });
       let tmpHeader = {...D[`${tbl}_KEY_MAP`]};
       delete tmpHeader.game_id;

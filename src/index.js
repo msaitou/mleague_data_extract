@@ -2,7 +2,7 @@ const ID1 = "#t1"; // データ抽出タブ
 const ID3 = "#t3"; // 整形＆出力タブ
 const ID4 = "#t4"; // シーズン
 const ID5 = "#t5"; // 役
-const ID6 = "#t6"; // プレイヤー
+const ID6 = "#t6"; // 選手
 const ID2 = "#t2"; // アカウントタブ
 
 // toastクラスがついている要素にBootStrapのトーストを適用する
@@ -179,7 +179,7 @@ document.querySelector(`${ID3} button.output`).addEventListener("click", async (
     return;
   } else showOkToast(["データの抽出が完了しました。"]);
   for (let [tbl, lines] of Object.entries(res)) {
-    if (["STATUS", "RESULTS"].indexOf(tbl) === -1) continue;
+    if (["STATS", "RESULTS"].indexOf(tbl) === -1) continue;
     //IEとその他で処理の切り分け
     if (navigator.appVersion.toString().indexOf(".NET") > 0) {
       //IE 10+
@@ -383,6 +383,111 @@ document.querySelector(`${ID5} button.save`).addEventListener("click", async () 
   getId5data(); // 再表示
 });
 // 役タブ ID5------------------------------
+// 選手タブ ID6------------------------------
+let id6FieldsList = ["no", "last", "first", "teamId", "teamName"];
+let getId6data = async () => {
+  let data = await window.eAPI.accessDb("MEMBERS", "select", null, {
+    cond: null,
+    fields: `OID,${id6FieldsList.join(",")}`,
+  });
+  let html = "";
+  // console.log(data);
+  data.forEach((d) => {
+    html += `<tr>`;
+    html += id6FieldsList.reduce((l, f) => l + `<td ${f}>${d[f]}</td>`, ``);
+    html += `<td ope><i class="btn btn-sm btn-dark me-1 py-0 fas fa-edit" rowid="${d.rowid}"></i>
+    <i class="btn btn-sm btn-dark me-1 py-0 fas fa-trash-can" rowid="${d.rowid}"></i></td></tr>`;
+  });
+  document.querySelector(`${ID6} tbody`).innerHTML = html;
+  document.querySelectorAll(`${ID6} i.fa-edit`).forEach((e, i) => {
+    e.addEventListener("click", () => {
+      let d = data.filter((d) => d.rowid == e.getAttribute("rowid"))[0];
+      document.querySelector(`${ID6} input[name='rowid']`).value = d.rowid;
+      id6FieldsList.forEach((f) => {
+        document.querySelector(`${ID6} input[name='${f}']`).value = d[f];
+      });
+      document.querySelector(`${ID6} .mode`).textContent = "編集";
+      document.querySelector(`${ID6} .mode`).classList.add("text-warning");
+    });
+  });
+  document.querySelectorAll(`${ID6} i.fa-trash-can`).forEach((e, i) => {
+    e.addEventListener("click", async () => {
+      let rowid = e.getAttribute("rowid");
+      if (rowid) {
+        where = `rowid = ${rowid}`;
+        let res = await window.eAPI.accessDb("MEMBERS", "delete", null, { cond: where });
+        console.log(res);
+        if (res && res.err) showErrToast([res.err]);
+        else showOkToast(["1つの選手の削除に成功しました。"]);
+        getId6data(); // 再表示
+      }
+    });
+  });
+};
+document.querySelector(`${ID6} button.redisp`).addEventListener("click", getId6data);
+document.querySelector(`${ID6} a.new`).addEventListener("click", () => {
+  document.querySelector(`${ID6} input[name='rowid']`).value = "";
+  id6FieldsList.forEach((f) => {
+    document.querySelector(`${ID6} input[name='${f}']`).value = "";
+  });
+  document.querySelector(`${ID6} .mode`).textContent = "新規";
+  document.querySelector(`${ID6} .mode`).classList.remove("text-warning");
+});
+document.querySelector(`${ID6} button.save`).addEventListener("click", async () => {
+  let saveObjs = {};
+  let messageList = [];
+  id6FieldsList.forEach((f) => {
+    saveObjs[f] = document.querySelector(`${ID6} input[name='${f}']`);
+    if (!saveObjs[f].value) {
+      if (messageList.length === 0) saveObjs[f].focus();
+      switch (f) {
+        case id6FieldsList[0]:
+          messageList.push("選手Noを入力してください");
+          break;
+        case id6FieldsList[1]:
+          messageList.push("姓を入力してください");
+          break;
+        case id6FieldsList[2]:
+          messageList.push("名を入力してください");
+          break;
+        case id6FieldsList[3]:
+          messageList.push("チームIDを入力してください");
+          break;
+        case id6FieldsList[4]:
+          messageList.push("チーム名を入力してください");
+          break;
+      }
+    }
+  });
+  if (messageList.length) {
+    showErrToast(messageList);
+    return;
+  }
+
+  let saveData = [[]];
+  id6FieldsList.forEach((f) => {
+    saveData[0].push(saveObjs[f].value);
+  });
+  let where = "";
+  let method = "insert";
+  let rowid = document.querySelector(`${ID6} input[name='rowid']`).value;
+  if (rowid) {
+    method = "update";
+    where = `rowid = ${rowid}`;
+    let tmp = {};
+    id6FieldsList.forEach((f, i) => {
+      tmp[f] = saveData[0][i];
+    });
+    tmp.full = `${tmp.last} ${tmp.first}`;
+    saveData = tmp;
+  } else saveData[0].splice(3, 0, `${saveObjs["last"].value} ${saveObjs["first"].value}`);  // かなり強引でしゅ
+
+  let res = await window.eAPI.accessDb("MEMBERS", method, null, { recs: saveData, cond: where });
+  if (res && res.err) showErrToast([res.err]);
+  else showOkToast(["選手情報の更新に成功しました。"]);
+  getId6data(); // 再表示
+});
+// 選手タブ ID6------------------------------
 
 // タブクリック時の初期動作
 document.querySelectorAll(`li.nav-item>a`).forEach((e, i) => {
@@ -406,6 +511,9 @@ document.querySelectorAll(`li.nav-item>a`).forEach((e, i) => {
       });
       break;
     case ID6:
+      e.addEventListener("click", async () => {
+        getId6data();
+      });
       break;
   }
 });

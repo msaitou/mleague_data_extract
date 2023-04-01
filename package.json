@@ -1,21 +1,32 @@
 {
   "name": "mleague_data_extract",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "mleague app",
+  "main": "./src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
-  "author": "",
+  "author": "齊藤雅人",
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.4.0",
     "bootstrap": "^5.2.3",
     "config": "^3.3.9",
-    "electron": "^23.1.4",
+    "electron-squirrel-startup": "^1.0.0",
     "log4js": "^6.9.1",
     "selenium-download": "^2.0.16",
     "selenium-webdriver": "^4.8.1",
     "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.1.0",
+    "@electron-forge/maker-deb": "^6.1.0",
+    "@electron-forge/maker-rpm": "^6.1.0",
+    "@electron-forge/maker-squirrel": "^6.1.0",
+    "@electron-forge/maker-zip": "^6.1.0",
+    "electron": "^23.2.1"
   }
 }

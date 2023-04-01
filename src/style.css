@@ -4,6 +4,9 @@
 .fs-8 {
   font-size: 0.75rem !important;
 }
+.container,.container-fluid {
+  --bs-gutter-x: 0 !important;
+}
 thead,
 tbody {
   display: block;
@@ -32,6 +35,25 @@ tbody {
 .table-season th,
 .table-season td {
   width: 120px;
+}
+.table-members {
+  width: 600px;
+}
+.table-members tbody {
+  max-height: 180px;
+  width: 580px;
+}
+.table-members th:not([teamname]):not([ope]),
+.table-members td:not([teamname]):not([ope]) {
+  width: 70px;
+}
+.table-members th[ope],
+.table-members td[ope]{
+  width: 85px;
+}
+.table-members th[teamname],
+.table-members td[teamname] {
+  width: 210px;
 }
 
 #t3 span[name="year"].dnone {
