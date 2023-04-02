@@ -15,6 +15,7 @@ const createWindow = () => {
       // レンダラーのグローバル（window や document など）と Node.js 環境の両方にアクセスできます。
       preload: path.join(__dirname, "preload.js"),
     },
+    icon :"src/image/m.ico"
   });
   mWin.setMenuBarVisibility(false);
   // メインウィンドウに表示するURLを指定します
