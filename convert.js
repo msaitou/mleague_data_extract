@@ -2,7 +2,6 @@ const logger = require("./initter.js").log();
 const DispLog = require("./initter.js").DispLog;
 global.log = logger;
 logger.debug(process.argv);
-const conf = require("config");
 const fs = require("fs");
 const { D } = require("./lib/defain.js");
 const sqliteDb = require("./sql").sqliteDb;
@@ -506,6 +505,6 @@ let getHiniti = (b) => {
 };
 if (process.argv.length > 2) {
   start({ year: process.argv[2], targetList: process.argv[3], reconvert: process.argv[4] });
-} else if (process.argv[0].indexOf("electron") > -1) {
+} else if (process.argv[0].indexOf("electron") > -1 || process.argv[0].indexOf("mleague_data_extract") > -1) {
   // electronから呼ばれたら無視
 } else logger.warn("引数が足りません");

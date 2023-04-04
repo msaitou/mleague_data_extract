@@ -2,11 +2,12 @@
   <head>
     <meta charset="UTF-8" />
     <!-- https://developer.mozilla.org/ja/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: ; script-src 'self' 'unsafe-inline'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://blogger.googleusercontent.com ; script-src 'self' 'unsafe-inline'" />
     <title>Mリーグ-データ抽出解析くん（haruzo専用）</title>
     <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css" />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhtmmO3zZyAZ6JuiKQOO51NAV9raL77S5GSYhM-HQHFTCA-m74dXT1gLhGf7y5NMXt-kh_1oFWJFjf4-bswdPsF8Yu8CnJ22hRQNFYAwNG_k1N6K0VDIBCdZq-Sz5dntvU9E7tAbFYkrcHuQdginLtZfsY6U8ZXog5762AZ1D3LYNPOZ0Ntk6ku789-eg/s128/m.ico">
   </head>
   <body class="overflow-hidden">
     <div class="container-fluid mx-1 fs-7">
@@ -381,7 +382,6 @@
         <div class="border bg-light"></div>
       </div>
     </div>
-
     <!-- 処理中の待ち -->
     <div class="position-absolute top-50 start-50 fs-3 bg-dark bg-opacity-50 text-white p-3 rounded d-none loading">
       waitting...

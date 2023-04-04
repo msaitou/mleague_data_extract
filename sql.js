@@ -1,8 +1,24 @@
 const sqlite3 = require("sqlite3").verbose();
-const conf = require("config");
-console.log("DBBB",conf.db);
-const db = new sqlite3.Database(conf.db);
+const conf = require("electron-node-config");
 const fs = require("fs");
+let dbPath = require("./lib/util").libUtil.getPathInElectron(conf.db);
+console.log("DBBB", dbPath);
+if (process.platform == "win32") {
+  let winDbPath = "C:\\ProgramData\\mleague_data_extract\\m.db";
+  // もしなければ、フォルダを作って、dbPathのファイルをコピー
+  if (fs.existsSync(winDbPath)) {
+    dbPath = winDbPath;
+  } else {
+    if (!fs.existsSync("C:\\ProgramData")) {
+      fs.mkdirSync("C:\\ProgramData");
+    }
+    if (!fs.existsSync("C:\\ProgramData\\mleague_data_extract")) {
+      fs.mkdirSync("C:\\ProgramData\\mleague_data_extract");
+    }
+    fs.copyFileSync(dbPath, winDbPath);
+  }
+}
+const db = new sqlite3.Database(dbPath);
 const { D } = require("./lib/defain");
 class sqliteDb {
   TB = {

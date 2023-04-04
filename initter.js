@@ -1,4 +1,5 @@
-const conf = require("config");
+// const conf = require("config");
+const conf = require("electron-node-config");
 const fs = require("fs");
 const chrome = require("selenium-webdriver/chrome");
 function getLogInstance() {
@@ -9,6 +10,7 @@ function getLogInstance() {
  */
 const thisLog = () => {
   const log = require("log4js");
+  const logPath = require("./lib/util").libUtil.getPathInElectron("./log/");
   log.configure({
     appenders: {
       // フォーマットリファレンス　https://log4js-node.github.io/log4js-node/layouts.html#pattern-format
@@ -18,7 +20,7 @@ const thisLog = () => {
       },
       app: {
         type: "dateFile",
-        filename: "log/m.log",
+        filename: `${logPath}/m.log`,
         pattern: "yyMMdd",
         keepFileExt: true,
         layout: { type: "pattern", pattern: "[%d{yy-MM-dd hh:mm:ss} %.4p] %m ->%f{2} %l" },
@@ -34,12 +36,12 @@ const thisLog = () => {
   // 古いファイルを削除してくれないので、自分で消す
   // 2個残す。　logファイルがあるフォルダで、m.*.logを古い順にけす
   const KEEP_NUM = 2;
-  let files = fs.readdirSync("log");
+  let files = fs.readdirSync(logPath);
   files = files.filter((f) => /^(a|m)\.\d{6}\.log$/.test(f)); // aかm.数字6桁.logという文字列をチェック
   let cnt = files.length;
   for (let f of files) {
     if (cnt > KEEP_NUM) {
-      fs.unlinkSync(`log/${f}`);
+      fs.unlinkSync(`${logPath}/${f}`);
       cnt--;
     }
   }
@@ -104,7 +106,9 @@ exports.initBrowserDriver = async function (isMob = false, headless = false) {
   let service = new chrome.ServiceBuilder(driverPath).build();
   const chromeOptions = new chrome.Options();
   // https://selenium-world.net/selenium-tips/3519/
-  chromeOptions.addArguments(`--user-data-dir=${conf.chrome["user-data-dir"]}`);
+  const userDataDir = require("./lib/util").libUtil.getPathInElectron(conf.chrome["user-data-dir"]);
+
+  chromeOptions.addArguments(`--user-data-dir=${userDataDir}`);
   chromeOptions.addArguments(`--profile-directory=${conf.chrome["profile"]}`);
   chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
 

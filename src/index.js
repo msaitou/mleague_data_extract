@@ -67,9 +67,9 @@ document.querySelector(`${ID2} button.save`).addEventListener("click", async () 
   }
   let data = { id: saveObjs.id.value, password: saveObjs.password.value };
   let where = `rowid = ${document.querySelector(`${ID2} input[name='rowid']`).value}`;
-  console.log(data, where);
+  // console.log(data, where);
   let res = await window.eAPI.accessDb("ACCOUNT", "update", null, { recs: data, cond: where });
-  console.log(res);
+  // console.log(res);
   if (res && res.err) showErrToast([res.err]);
   else showOkToast(["アカウント情報の更新に成功しました。"]);
 });
@@ -106,9 +106,9 @@ document.querySelector(`${ID1} button.extract`).addEventListener("click", async 
     else if (["targets"].indexOf(f) > -1) data[f] = o.value.split("\n");
     else data[f] = o.value;
   }
-  console.log(data);
+  // console.log(data);
   let res = await window.eAPI.extract(data);
-  console.log(res);
+  // console.log(res);
   if (res && res.err) showErrToast([res.err]);
   else showOkToast(["データの抽出が完了しました。"]);
   toggleDisabled(false);
@@ -127,7 +127,7 @@ let getId3data = async () => {
   }
   let data = await window.eAPI.extractedData(year.value);
   let html = "";
-  console.log(data);
+  // console.log(data);
   data.forEach((d) => {
     html += `<tr>`;
     html += `<td><input type="checkbox" class="form-checkbox" name="check" game_id="${d.game_id}"/></td>`;
@@ -148,7 +148,7 @@ let getId3data = async () => {
 };
 document.querySelector(`${ID3} button.redisp`).addEventListener("click", getId3data);
 document.querySelector(`${ID3} #checkall`).addEventListener("change", (e) => {
-  console.log(e.target.checked);
+  // console.log(e.target.checked);
   document.querySelectorAll(`${ID3} [name="check"]`).forEach((el) => {
     el.checked = e.target.checked;
   });
@@ -169,10 +169,10 @@ document.querySelector(`${ID3} button.output`).addEventListener("click", async (
     }
   });
   toggleDisabled(true);
-  console.log(data);
+  // console.log(data);
   let res = await window.eAPI.convert(data);
   toggleDisabled(false);
-  console.log(res);
+  // console.log(res);
 
   if (res && res.err) {
     showErrToast([res.err]);
@@ -220,7 +220,7 @@ let getId4data = async () => {
     html += `<td><i class="btn btn-sm btn-dark me-1 py-0 fas fa-edit" rowid="${d.rowid}"></i>
     <i class="btn btn-sm btn-dark me-1 py-0 fas fa-trash-can" rowid="${d.rowid}"></i></td></tr>`;
   });
-  console.log(html);
+  // console.log(html);
   document.querySelector(`${ID4} tbody`).innerHTML = html;
   document.querySelectorAll(`${ID4} i.fa-edit`).forEach((e, i) => {
     e.addEventListener("click", () => {
@@ -235,12 +235,12 @@ let getId4data = async () => {
   });
   document.querySelectorAll(`${ID4} i.fa-trash-can`).forEach((e, i) => {
     e.addEventListener("click", async () => {
-      console.log("trash");
+      // console.log("trash");
       let rowid = e.getAttribute("rowid");
       if (rowid) {
         where = `rowid = ${rowid}`;
         let res = await window.eAPI.accessDb("SEASON", "delete", null, { cond: where });
-        console.log(res);
+        // console.log(res);
         if (res && res.err) showErrToast([res.err]);
         else showOkToast(["1つのシーズン情報の削除に成功しました。"]);
         getId4data(); // 再表示
@@ -302,7 +302,7 @@ document.querySelector(`${ID4} button.save`).addEventListener("click", async () 
     saveData = tmp;
   }
   let res = await window.eAPI.accessDb("SEASON", method, null, { recs: saveData, cond: where });
-  console.log(res);
+  // console.log(res);
   if (res && res.err) showErrToast([res.err]);
   else showOkToast(["シーズン情報の更新に成功しました。"]);
   document.querySelector(`${ID4} a.new`).click(); // 初期化
@@ -338,12 +338,12 @@ let getId5data = async () => {
   });
   document.querySelectorAll(`${ID5} i.fa-trash-can`).forEach((e, i) => {
     e.addEventListener("click", async () => {
-      console.log("trash");
+      // console.log("trash");
       let rowid = e.getAttribute("rowid");
       if (rowid) {
         where = `rowid = ${rowid}`;
         let res = await window.eAPI.accessDb("YAKU", "delete", null, { cond: where });
-        console.log(res);
+        // console.log(res);
         if (res && res.err) showErrToast([res.err]);
         else showOkToast(["1つの役の削除に成功しました。"]);
         getId5data(); // 再表示
@@ -416,7 +416,7 @@ let getId6data = async () => {
       if (rowid) {
         where = `rowid = ${rowid}`;
         let res = await window.eAPI.accessDb("MEMBERS", "delete", null, { cond: where });
-        console.log(res);
+        // console.log(res);
         if (res && res.err) showErrToast([res.err]);
         else showOkToast(["1つの選手の削除に成功しました。"]);
         getId6data(); // 再表示

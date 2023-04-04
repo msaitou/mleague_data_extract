@@ -2,7 +2,8 @@ const logger = require("./initter.js").log();
 const DispLog = require("./initter.js").DispLog;
 global.log = logger;
 logger.debug(process.argv);
-const conf = require("config");
+const conf = require("electron-node-config");
+// const conf = require("config");
 const { D } = require("./lib/defain.js");
 const sqliteDb = require("./sql").sqliteDb;
 const { BaseWebDriverWrapper } = require("./base-webdriver-wrapper");
@@ -80,7 +81,7 @@ class WebCls {
         case "取得可能全て":
           let sches = await db.select("SCHE");
           let dates = sches.reduce((p, c) => {
-            p.push(c.data);
+            p.push(c.date);
             return p;
           }, []);
           urlMap = await getUrlMapFromDate(db, dates);
@@ -148,8 +149,7 @@ class PreAnalyzer extends BaseWebDriverWrapper {
           let matchIndex = scheList.indexOf(r.date);
           if (matchIndex > -1) scheList.splice(matchIndex, 1);
         });
-      }
-      else if(forceFlag.sche) {
+      } else if (forceFlag.sche) {
         await this.db.delete("SCHE"); // 一旦全削除
       }
       if (scheList.length) {
@@ -316,7 +316,7 @@ async function getUrlMapFromDate(db, dates) {
     if (!order) throw `対応するスケジュールが見つかりません（範囲外）`;
     let gameIdCommon = `${targetSeason.url_key}_${order.toString().padStart(4, "0")}_`;
     let gameList = [];
-    for (let key of ["01A", "02A"]) {
+    for (let key of db.year == "2018" && targetSeason.kind == "F" ? ["01A", "02A", "03A"] : ["01A", "02A"]) {
       let game_id = `${gameIdCommon}${key}`;
       gameList.push({ game_id, url: `https://viewer.ml-log.jp/web/viewer?gameid=${game_id}` });
     }
@@ -365,6 +365,6 @@ if (process.argv.length > 2) {
   //   year: "2018";
   // }
   start({ year: process.argv[2], targetList: process.argv[3], reconvert: process.argv[4] });
-} else if (process.argv[0].indexOf("electron") > -1) {
+} else if (process.argv[0].indexOf("electron") > -1 || process.argv[0].indexOf("mleague_data_extract") > -1) {
   // electronから呼ばれたら無視
 } else logger.warn("引数が足りません");

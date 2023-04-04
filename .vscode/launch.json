@@ -29,9 +29,9 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
       "windows": {
-        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+        "runtimeExecutable": "C:\\Users\\msaito\\AppData\\Local\\fnm_multishells\\4180_1673583968497\\npx.cmd"
       },
-      "args": ["./src"],
+      "args": ["${workspaceFolder}/node_modules/.bin/electron.cmd", "."],
       "outputCapture": "std"
     }
   ]

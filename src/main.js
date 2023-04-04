@@ -1,5 +1,74 @@
 // アプリケーション作成用のモジュールを読み込み
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, autoUpdater } = require("electron");
+// run this as early in the main process as possible
+if (require("electron-squirrel-startup")) app.quit();
+
+if (handleSquirrelEvent()) {
+  // squirrel event handled and app will exit in 1000ms, so don't do anything else
+  return;
+}
+
+function handleSquirrelEvent() {
+  if (process.argv.length === 1) {
+    return false;
+  }
+
+  const ChildProcess = require("child_process");
+  const path = require("path");
+
+  const appFolder = path.resolve(process.execPath, "..");
+  const rootAtomFolder = path.resolve(appFolder, "..");
+  const updateDotExe = path.resolve(path.join(rootAtomFolder, "Update.exe"));
+  const exeName = path.basename(process.execPath);
+
+  const spawn = function (command, args) {
+    let spawnedProcess, error;
+
+    try {
+      spawnedProcess = ChildProcess.spawn(command, args, { detached: true });
+    } catch (error) {}
+
+    return spawnedProcess;
+  };
+
+  const spawnUpdate = function (args) {
+    return spawn(updateDotExe, args);
+  };
+
+  const squirrelEvent = process.argv[1];
+  switch (squirrelEvent) {
+    case "--squirrel-install":
+    case "--squirrel-updated":
+      // Optionally do things such as:
+      // - Add your .exe to the PATH
+      // - Write to the registry for things like file associations and
+      //   explorer context menus
+
+      // Install desktop and start menu shortcuts
+      spawnUpdate(["--createShortcut", exeName]);
+
+      setTimeout(app.quit, 1000);
+      return true;
+
+    case "--squirrel-uninstall":
+      // Undo anything you did in the --squirrel-install and
+      // --squirrel-updated handlers
+
+      // Remove desktop and start menu shortcuts
+      spawnUpdate(["--removeShortcut", exeName]);
+
+      setTimeout(app.quit, 1000);
+      return true;
+
+    case "--squirrel-obsolete":
+      // This is called on the outgoing version of your app before
+      // we update to the new version - it's the opposite of
+      // --squirrel-updated
+
+      app.quit();
+      return true;
+  }
+}
 const path = require("path");
 
 // メインウィンドウ
@@ -15,7 +84,8 @@ const createWindow = () => {
       // レンダラーのグローバル（window や document など）と Node.js 環境の両方にアクセスできます。
       preload: path.join(__dirname, "preload.js"),
     },
-    icon :"src/image/m.ico"
+    icon: "src/image/m.ico",
+    // title: `Mリーグ-データ抽出解析くん（haruzo専用） ${app.getVersion()}`,
   });
   mWin.setMenuBarVisibility(false);
   // メインウィンドウに表示するURLを指定します
@@ -33,12 +103,12 @@ const createWindow = () => {
 
 //  初期化が完了した時の処理
 app.whenReady().then(() => {
-  ipcMain.handle("dialog:openFile", handleFileOpen); // プロセス間通信
   ipcMain.handle("accessDb", accessDb); // プロセス間通信
   ipcMain.handle("extractedData", extractedData); // プロセス間通信
   ipcMain.handle("convert", convert); // プロセス間通信
   ipcMain.handle("extract", extract); // プロセス間通信
   createWindow();
+  // logger.info(app.getVersion());
   // アプリケーションがアクティブになった時の処理(Macだと、Dockがクリックされた時）
   app.on("activate", () => {
     // メインウィンドウが消えている場合は再度メインウィンドウを作成する
@@ -56,18 +126,9 @@ app.on("window-all-closed", () => {
   }
 });
 
-async function handleFileOpen(e, a) {
-  console.log(a);
-  const { canceled, filePaths } = await dialog.showOpenDialog();
-  if (canceled) {
-    return;
-  } else {
-    return filePaths[0];
-  }
-}
 const logger = require("../initter.js").log();
 global.log = logger;
-const conf = require("config");
+const conf = require("electron-node-config");
 const { sqliteDb } = require("../sql.js");
 const { Convert } = require("../convert.js");
 const { WebCls } = require("../index.js");
@@ -122,7 +183,7 @@ async function convert(e, data) {
     });
     for (let tbl of ["STATS", "RESULTS"]) {
       let recs = await accessDb(null, tbl, "select", data.year, { cond: `game_id in ('${idList.join("','")}')` });
-      let tmpHeader = {...D[`${tbl}_KEY_MAP`]};
+      let tmpHeader = { ...D[`${tbl}_KEY_MAP`] };
       delete tmpHeader.game_id;
       let tmpCsv = [Object.values(tmpHeader).join(",")];
       for (let rec of recs) {
@@ -146,10 +207,63 @@ async function extract(e, data) {
     // 先にアカウントを保存
     let Web = new WebCls(mWin);
     await Web.main(data);
-  }
-  catch(e) {
+  } catch (e) {
     logger.warn(e);
     res.err = `失敗しました。${e}`;
   }
   return res;
+}
+
+// ファイルの末尾に追加
+const server = "https://update.electronjs.org";
+const feed = `${server}/msaitou/mleague_data_extract/${process.platform}-${process.arch}/${app.getVersion()}`;
+
+if (app.isPackaged) {
+  // パッケージされている（ローカル実行ではない）
+  autoUpdater.setFeedURL({
+    url: feed,
+  });
+  autoUpdater.checkForUpdates(); // アップデートを確認する
+
+  // アップデートのダウンロードが完了したとき
+  autoUpdater.on("update-downloaded", async () => {
+    const returnValue = await dialog.showMessageBox({
+      message: "アップデートあり",
+      detail: "再起動してインストールできます。",
+      buttons: ["再起動", "後で"],
+    });
+    if (returnValue.response === 0) {
+      autoUpdater.quitAndInstall(); // アプリを終了してインストール
+    }
+  });
+
+  // アップデートがあるとき
+  autoUpdater.on("update-available", () => {
+    mWin.webContents.send("setVersion", app.getVersion());
+    dialog.showMessageBox({
+      message: "アップデートがあります",
+      buttons: ["OK"],
+    });
+  });
+
+  // アップデートがないとき
+  autoUpdater.on("update-not-available", () => {
+    mWin.webContents.send("setVersion", app.getVersion());
+    logger.info("アップデートはありません");
+    // mWin.webContents.send("setVersion", app.getVersion());
+
+    // dialog.showMessageBox({
+    //   message: "アップデートはありません",
+    //   buttons: ["OK"],
+    // });
+  });
+
+  // エラーが発生したとき
+  autoUpdater.on("error", () => {
+    mWin.webContents.send("setVersion", app.getVersion());
+    dialog.showMessageBox({
+      message: "アップデートエラーが起きました",
+      buttons: ["OK"],
+    });
+  });
 }
