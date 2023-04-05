@@ -25,13 +25,13 @@ module.exports = {
       config: {
         authors: "masatosaito",
         description: "Mリーグのスタッツデータを抽出解析します。",
-        // iconUrl:
-        //   "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhtmmO3zZyAZ6JuiKQOO51NAV9raL77S5GSYhM-HQHFTCA-m74dXT1gLhGf7y5NMXt-kh_1oFWJFjf4-bswdPsF8Yu8CnJ22hRQNFYAwNG_k1N6K0VDIBCdZq-Sz5dntvU9E7tAbFYkrcHuQdginLtZfsY6U8ZXog5762AZ1D3LYNPOZ0Ntk6ku789-eg/s128/m.ico",
+        iconUrl:
+          "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhtmmO3zZyAZ6JuiKQOO51NAV9raL77S5GSYhM-HQHFTCA-m74dXT1gLhGf7y5NMXt-kh_1oFWJFjf4-bswdPsF8Yu8CnJ22hRQNFYAwNG_k1N6K0VDIBCdZq-Sz5dntvU9E7tAbFYkrcHuQdginLtZfsY6U8ZXog5762AZ1D3LYNPOZ0Ntk6ku789-eg/s128/m.ico",
         // The ICO file to use as the icon for the generated Setup.exe
         setupIcon: "src/image/m.ico",
         setupExe: "m_setup.exe",
         // noMsi: false,
-        name: "Mリーグのスタッツデータ抽出解析",
+        // name: "Mリーグのスタッツデータ抽出解析",
       },
     },
     {
