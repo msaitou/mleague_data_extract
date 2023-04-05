@@ -125,18 +125,22 @@ let getId3data = async () => {
     showErrToast(messageList);
     return;
   }
-  let data = await window.eAPI.extractedData(year.value);
+  let res = await window.eAPI.extractedData(year.value);
+  if (res && res.err) {
+    showErrToast([res.err]);
+    return;
+  }
   let html = "";
   // console.log(data);
-  data.forEach((d) => {
+  res.forEach((d) => {
     html += `<tr>`;
     html += `<td><input type="checkbox" class="form-checkbox" name="check" game_id="${d.game_id}"/></td>`;
     html += id3FieldsList.reduce((l, f) => l + `<td ${f}>${d[f]}</td>`, ``);
     html += `</tr>`;
   });
   // console.log(html);
-  document.querySelector(`${ID3} span.recnum`).textContent = data.length;
-  document.querySelector(`${ID3} span.convertnum`).textContent = data.filter((d) => d.status == "済").length;
+  document.querySelector(`${ID3} span.recnum`).textContent = res.length;
+  document.querySelector(`${ID3} span.convertnum`).textContent = res.filter((d) => d.status == "済").length;
   document.querySelector(`${ID3} div[summary]`).classList.remove("d-none"); // 表示する
   document.querySelector(`${ID3} tbody`).innerHTML = html;
   document.querySelectorAll(`${ID3} table td`).forEach((el) => {

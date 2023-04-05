@@ -156,19 +156,25 @@ async function accessDb(e, tName, method, year, params = {}) {
 // 抽出済みデータ取得
 async function extractedData(e, year) {
   // mWin.webContents.send("test1", "testだよ");
-  db.setYear(year);
-  let recs = await db.extracted();
-  console.log(recs);
-  let resRecs = [];
-  for (let line of recs) {
-    let status = "済";
-    if (!line.game_no) {
-      status = "未";
-      line.game_no = `${line.date_id}-${line.game_id.substr(line.game_id.length - 2, 1)}`; // 捻出
+  try {
+    db.setYear(year);
+    let recs = await db.extracted();
+    console.log(recs);
+    let resRecs = [];
+    for (let line of recs) {
+      let status = "済";
+      if (!line.game_no) {
+        status = "未";
+        line.game_no = `${line.date_id}-${line.game_id.substr(line.game_id.length - 2, 1)}`; // 捻出
+      }
+      resRecs.push({ ...line, status });
     }
-    resRecs.push({ ...line, status });
+    return resRecs;
+  } catch (e) {
+    logger.warn(e);
+    if (e.toString().indexOf("no such table") > -1) e = `${year}シーズンのデータはまだ抽出されていません`;
+    return { err: `失敗しました(${e})` };
   }
-  return resRecs;
 }
 // 整形＆出力
 async function convert(e, data) {

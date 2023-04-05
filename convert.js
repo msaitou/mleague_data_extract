@@ -232,6 +232,7 @@ async function start(p, dispLog) {
                   kyoku: kyoku.name,
                   reach: "NO",
                   point_get: 0,
+                  remarks: "",
                 };
                 kyokuStats.push(kyokuRec);
               }
@@ -307,9 +308,14 @@ async function start(p, dispLog) {
               break;
             case "agari":
               // yaku: "役",
-              if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) args.splice(0, 1); // 不要なので削除
-              if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) args.splice(0, 1); // 不要なので削除
               // commentは勝敗とか
+              let remarks = "";
+              for (let k = 0; k < 2; k++) {
+                if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) {
+                  if (args[0].indexOf("comment=") === 0) remarks = args[0].substr(args[0].indexOf("comment="));
+                  args.splice(0, 1); // 不要なので削除
+                }
+              }
               let tmp = kyokuStats[nanichaMap[args[0]]];
               args.splice(0, 3); // 不要なので削除
               for (let i in args) {
@@ -319,6 +325,7 @@ async function start(p, dispLog) {
                 if (["裏ドラ", "ドラ", "赤"].indexOf(yaku) > -1) yaku += args[Number(i) + 1];
                 tmp.yaku.push(yaku);
               }
+              if (remarks) tmp.remarks = remarks;
               // tmp.yaku = tmp.yaku.join(",");  // 後でやるほうがいいか。
               break;
             case "ryukyoku":
@@ -329,6 +336,8 @@ async function start(p, dispLog) {
               let plusNum = currentKyoku.tenpaiPlayer.length % 4;
               let tenpaiP = plusNum ? 3000 / plusNum : 0;
               let notenP = plusNum ? -3000 / (4 - plusNum) : 0;
+              let remarks2 = "";
+              if (args[0] && args[0].indexOf("comment=") === 0) remarks2 = args[0].substr(args[0].indexOf("comment="));
               for (let [key, index] of Object.entries(nanichaMap)) {
                 let tenpaiStats = {};
                 let iKyoutaku = kyokuStats[index].kyoutaku ? kyokuStats[index].kyoutaku : 0;
@@ -349,6 +358,7 @@ async function start(p, dispLog) {
                   ...kyokuStats[index],
                   ...tenpaiStats,
                   point_now: currentPoint[key],
+                  remarks: remarks2,
                 };
               }
               currentKyoku.ryuukyokuFlag = true;
@@ -449,6 +459,8 @@ async function start(p, dispLog) {
               };
 
               let checkTotal = 0;
+              let tmpOverStats = {};
+              let remarks3 = "";
               for (let i = 0; i < 8; i += 2) {
                 let rank = rankMapP[args[i]];
                 let p = Number(args[i + 1]);
@@ -466,17 +478,33 @@ async function start(p, dispLog) {
                   // tenbo: kyokuStats[nanichaMap[args[i]]].point_now,
                   tenbo: tenbo,
                   rank: rank,
+                  remarks: "",
                 });
                 checkTotal += tenbo;
                 if (kyokuStats[nanichaMap[args[i]]].point_now != tenbo) {
-                  kyokuStats[nanichaMap[args[i]]].kyoutaku = tenbo - kyokuStats[nanichaMap[args[i]]].point_now;
-                  kyokuStats[nanichaMap[args[i]]].balance += kyokuStats[nanichaMap[args[i]]].kyoutaku;
-                  kyokuStats[nanichaMap[args[i]]].point_now = tenbo;
+                  let diff = tenbo - kyokuStats[nanichaMap[args[i]]].point_now;
+                  if (diff < -1000) remarks3 = "この試合のある局のデータが正しくありません。";
+                  tmpOverStats[args[i]] = {
+                    kyoutaku: diff,
+                    balance: kyokuStats[nanichaMap[args[i]]].balance + diff,
+                    point_now: tenbo,
+                  };
+                  // kyokuStats[nanichaMap[args[i]]].kyoutaku = tenbo - kyokuStats[nanichaMap[args[i]]].point_now;
+                  // kyokuStats[nanichaMap[args[i]]].balance += kyokuStats[nanichaMap[args[i]]].kyoutaku;
+                  // kyokuStats[nanichaMap[args[i]]].point_now = tenbo;
+                }
+              }
+              for (let key in nanichaMap) {
+                if (remarks3) kyokuStats[nanichaMap[key]].remarks = remarks3;
+                else if (tmpOverStats[key]) {
+                  kyokuStats[nanichaMap[key]].kyoutaku = tmpOverStats[key].kyoutaku;
+                  kyokuStats[nanichaMap[key]].balance = tmpOverStats[key].balance;
+                  kyokuStats[nanichaMap[key]].point_now = tmpOverStats[key].point_now;
                 }
               }
               if (checkTotal !== 100000) {
                 for (let r of result) {
-                  r.point = `結果が正しくありません。${r.point} `;
+                  r.remarks = `結果が正しくありません。`;
                 }
               } else {
                 stats.splice(stats.length - 4, 4);
