@@ -130,7 +130,7 @@ async function start(p, dispLog) {
       if (c.official) p[c.official] = c.haruzo;
       return p;
     }, {});
-    let memberRecs = await db.select("MEMBERS");  // メンバー
+    let memberRecs = await db.select("MEMBERS"); // メンバー
     // シーズン判別で、seasonも引いとく
     let seasonRecs = await db.select("SEASON", `year = "${db.year}"`);
     seasonRecs.sort((a, b) => {
@@ -393,12 +393,22 @@ async function start(p, dispLog) {
               // L001_S013_0001_02A|["D0","78.8","A0","14.9","C0","-35.8","B0","-57.9","D0_rank=0","A0_rank=1","C0_rank=2","B0_rank=3"]
               let rankMap = {};
               let rankMapP = {};
-              for (let i = args.length - 4; i < args.length; i++) {
-                // 同じランクがあったら、馬は半分こにするために確認
-                let r = Number(args[i].substr(args[i].length - 1, 1)) + 1;
-                if (!(r in rankMap)) rankMap[r] = [];
-                rankMap[r].push(args[i].substr(0, 2)); // ランクに対して、人をぶら下げる
-                rankMapP[args[i].substr(0, 2)] = r;
+              if (args.length === 12) {
+                for (let i = args.length - 4; i < args.length; i++) {
+                  // 同じランクがあったら、馬は半分こにするために確認
+                  let r = Number(args[i].substr(args[i].length - 1, 1)) + 1;
+                  if (!(r in rankMap)) rankMap[r] = [];
+                  rankMap[r].push(args[i].substr(0, 2)); // ランクに対して、人をぶら下げる
+                  rankMapP[args[i].substr(0, 2)] = r;
+                }
+              } else if (args.length === 8) {
+                for (let i = 0; i < args.length; i += 2) {
+                  // 同じランクがあったら、馬は半分こにするために確認
+                  let r = Number(i) / 2 + 1;
+                  if (!(r in rankMap)) rankMap[r] = [];
+                  rankMap[r].push(args[i]); // ランクに対して、人をぶら下げる
+                  rankMapP[args[i]] = r;
+                }
               }
               let juniMapTmp = { 1: 20000, 2: -20000, 3: -40000, 4: -60000 };
               let juniMap = {};

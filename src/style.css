@@ -29,7 +29,7 @@ tbody {
   width: 120px;
 }
 .table-season tbody {
-  max-height: 220px;
+  max-height: 120px;
   width: 600px;
 }
 .table-season th,

@@ -145,6 +145,11 @@ let getId3data = async () => {
       checkEl.checked = !checkEl.checked;
     });
   }); // 行クリックでチェックonoff
+  document.querySelectorAll(`${ID3} [name='check']`).forEach((el) => {
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();  // tdのイベントで変更が無くなるのでバブリングをキャンセル
+    });
+  });
 };
 document.querySelector(`${ID3} button.redisp`).addEventListener("click", getId3data);
 document.querySelector(`${ID3} #checkall`).addEventListener("change", (e) => {
@@ -202,6 +207,7 @@ document.querySelector(`${ID3} button.output`).addEventListener("click", async (
   }
 
   getId3data(); // 再表示
+  document.querySelector(`${ID3} #checkall`).checked = false; // 元に戻す
 });
 // 整形＆出力タブ ID3------------------------------
 // シーズンタブ ID4------------------------------
