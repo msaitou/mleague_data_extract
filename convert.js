@@ -312,7 +312,7 @@ async function start(p, dispLog) {
               let remarks = "";
               for (let k = 0; k < 2; k++) {
                 if (args[0].indexOf("ron=") === 0 || args[0].indexOf("comment=") === 0) {
-                  if (args[0].indexOf("comment=") === 0) remarks = args[0].substr(args[0].indexOf("comment="));
+                  if (args[0].indexOf("comment=") === 0) remarks = args[0].substr("comment=".length);
                   args.splice(0, 1); // 不要なので削除
                 }
               }
@@ -337,7 +337,7 @@ async function start(p, dispLog) {
               let tenpaiP = plusNum ? 3000 / plusNum : 0;
               let notenP = plusNum ? -3000 / (4 - plusNum) : 0;
               let remarks2 = "";
-              if (args[0] && args[0].indexOf("comment=") === 0) remarks2 = args[0].substr(args[0].indexOf("comment="));
+              if (args[0] && args[0].indexOf("comment=") === 0) remarks2 = args[0].substr("comment=".length);
               for (let [key, index] of Object.entries(nanichaMap)) {
                 let tenpaiStats = {};
                 let iKyoutaku = kyokuStats[index].kyoutaku ? kyokuStats[index].kyoutaku : 0;
@@ -483,7 +483,8 @@ async function start(p, dispLog) {
                 checkTotal += tenbo;
                 if (kyokuStats[nanichaMap[args[i]]].point_now != tenbo) {
                   let diff = tenbo - kyokuStats[nanichaMap[args[i]]].point_now;
-                  if (diff < -1000) remarks3 = "この試合のある局のデータが正しくありません。";
+                  if (diff < -1000 || (diff > 1 && diff < 1000))
+                    remarks3 = "この試合のある局のデータが正しくありません。";
                   tmpOverStats[args[i]] = {
                     kyoutaku: diff,
                     balance: kyokuStats[nanichaMap[args[i]]].balance + diff,

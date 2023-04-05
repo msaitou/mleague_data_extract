@@ -206,10 +206,10 @@ class Analyzer extends BaseWebDriverWrapper {
             let el = await this.getEle(se[3], 1000);
             await this.clickEle(el, 4000, 100);
             // 多分ログインできてるはず
-            let tmp = await this.db.select("TMP"); // 一回やれば、しばらくキャッシュされるので、１２時間過ぎたらやり直してみる
+            let tmp = await this.db.select("TMP"); // 一回やれば、しばらくキャッシュされるので、２時間過ぎたらやり直してみる
             let reFlag = true;
             if (tmp.length && tmp[0].date) {
-              if (new Date().getTime() - new Date(tmp[0].date) < 12 * 60 * 60 * 1000) reFlag = false;
+              if (new Date().getTime() - new Date(tmp[0].date) < 1 * 60 * 60 * 1000) reFlag = false;
             }
             if (reFlag) {
               // 最初だけちゃんと画面を操作して開く必要あり
@@ -267,6 +267,7 @@ class Analyzer extends BaseWebDriverWrapper {
                 result.forEach((r) => {
                   saveRec.push([currentGameId, dateId, r.time, r.id, r.cmd, JSON.stringify(r.args)]);
                 });
+                await this.db.delete("RAW", `game_id = "${currentGameId}"`);
                 await this.db.insert("RAW", saveRec);
                 break;
               }

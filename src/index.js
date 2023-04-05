@@ -130,6 +130,8 @@ let getId3data = async () => {
     showErrToast([res.err]);
     return;
   }
+  //オブジェクトの昇順ソート
+  res.sort((a, b) => (a.game_no < b.game_no ? -1 : 1));
   let html = "";
   // console.log(data);
   res.forEach((d) => {
@@ -150,8 +152,8 @@ let getId3data = async () => {
     });
   }); // 行クリックでチェックonoff
   document.querySelectorAll(`${ID3} [name='check']`).forEach((el) => {
-    el.addEventListener("click", (e)=>{
-      e.stopPropagation();  // tdのイベントで変更が無くなるのでバブリングをキャンセル
+    el.addEventListener("click", (e) => {
+      e.stopPropagation(); // tdのイベントで変更が無くなるのでバブリングをキャンセル
     });
   });
 };
@@ -223,6 +225,8 @@ let getId4data = async () => {
   });
   let html = "";
   // console.log(data);
+    //オブジェクトの降順ソート
+    data.sort((a, b) => (a.url_key > b.url_key ? -1 : 1));
   data.forEach((d) => {
     html += `<tr>`;
     // `<td>${d.year}</td><td>${d.url_key}</td><td>${d.kind}</td><td>${d.start_date}</td>`;
@@ -490,7 +494,7 @@ document.querySelector(`${ID6} button.save`).addEventListener("click", async () 
     });
     tmp.full = `${tmp.last} ${tmp.first}`;
     saveData = tmp;
-  } else saveData[0].splice(3, 0, `${saveObjs["last"].value} ${saveObjs["first"].value}`);  // かなり強引でしゅ
+  } else saveData[0].splice(3, 0, `${saveObjs["last"].value} ${saveObjs["first"].value}`); // かなり強引でしゅ
 
   let res = await window.eAPI.accessDb("MEMBERS", method, null, { recs: saveData, cond: where });
   if (res && res.err) showErrToast([res.err]);
