@@ -15,7 +15,7 @@ module.exports = {
     icon: "src/image/m", // no file extension required
     // asar: true,
     // ignore: [".vscode", "log", "data"],
-    // ignore: [".vscode", "^(\/log$)", "^(\/bin$)"], // 最初用
+    // ignore: [".vscode", ".gitignore", ".package-lock.json", "^(/log$)", "^(/bin$)"], // 最初用
     ignore: [".vscode", ".gitignore",".package-lock.json","^(\/log$)", "^(\/bin$)", "^(\/data$)"],  // 以降の更新用
   },
   rebuildConfig: {},
