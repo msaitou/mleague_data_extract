@@ -65,10 +65,18 @@ document.querySelector(`${ID2} button.save`).addEventListener("click", async () 
     showErrToast(messageList);
     return;
   }
-  let data = { id: saveObjs.id.value, password: saveObjs.password.value };
-  let where = `rowid = ${document.querySelector(`${ID2} input[name='rowid']`).value}`;
+  let data = [[saveObjs.id.value, saveObjs.password.value]];
+  let rowId = document.querySelector(`${ID2} input[name='rowid']`).value;
+  let where = "";
+  let method = "insert";
+  if (rowId) {
+    method = "update";
+    where = `rowid = ${rowId}`;
+    data = { id: saveObjs.id.value, password: saveObjs.password.value };
+  }
+
   // console.log(data, where);
-  let res = await window.eAPI.accessDb("ACCOUNT", "update", null, { recs: data, cond: where });
+  let res = await window.eAPI.accessDb("ACCOUNT", method, null, { recs: data, cond: where });
   // console.log(res);
   if (res && res.err) showErrToast([res.err]);
   else showOkToast(["アカウント情報の更新に成功しました。"]);
@@ -198,8 +206,10 @@ document.querySelector(`${ID3} button.output`).addEventListener("click", async (
     } else {
       //aタグの生成
       var a = document.createElement("a");
+      convert = Encoding.convert(Encoding.stringToCode(lines), 'sjis', 'unicode');
       //レスポンスからBlobオブジェクト＆URLの生成
-      var blobUrl = window.URL.createObjectURL(new Blob([lines], { type: "text/csv" }));
+      // var blobUrl = window.URL.createObjectURL(new Blob([lines], { type: "text/csv" }));
+      var blobUrl = window.URL.createObjectURL(new Blob([new Uint8Array(convert)], {type: 'text/csv'}));
       //上で生成したaタグをアペンド
       document.body.appendChild(a);
       a.style = "display: none";
@@ -225,8 +235,8 @@ let getId4data = async () => {
   });
   let html = "";
   // console.log(data);
-    //オブジェクトの降順ソート
-    data.sort((a, b) => (a.url_key > b.url_key ? -1 : 1));
+  //オブジェクトの降順ソート
+  data.sort((a, b) => (a.url_key > b.url_key ? -1 : 1));
   data.forEach((d) => {
     html += `<tr>`;
     // `<td>${d.year}</td><td>${d.url_key}</td><td>${d.kind}</td><td>${d.start_date}</td>`;
@@ -510,7 +520,9 @@ document.querySelectorAll(`li.nav-item>a`).forEach((e, i) => {
     case ID1:
       break;
     case ID2:
-      getId2data();
+      e.addEventListener("click", async () => {
+        getId2data();
+      });
       break;
     case ID3:
       break;

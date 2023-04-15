@@ -1,6 +1,6 @@
 {
   "name": "mleague_data_extract",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "It is an application that extracts and analyzes the stats data of mleague.",
   "main": "./src/main.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "bootstrap": "^5.2.3",
     "electron-node-config": "^1.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "encoding-japanese": "^2.0.0",
     "log4js": "^6.9.1",
     "selenium-download": "^2.0.16",
     "selenium-webdriver": "^4.8.1",
