@@ -187,7 +187,7 @@ class Analyzer extends BaseWebDriverWrapper {
       if (!this.getDriver()) this.setDriver(await this.webDriver(null, conf.chrome.headless));
       await this.openUrl(this.baseUrl);
       await this.sleep(1000);
-      let se = ["div.p-loginMenu", "#mail", "#password", "div.p-loginMenu__btn> button", "p.js-personalMenu__title"];
+      let se = ["div.p-loginMenu", "#mail", "#password", "div.p-loginMenu__btn> button", "p.p-personalMenu__title"];
       let username = await this.driver.executeScript(`return document.querySelectorAll('${se[4]}')[0].textContent;`);
       if (!username) {
         // ログインが必要
@@ -205,13 +205,15 @@ class Analyzer extends BaseWebDriverWrapper {
             await inputEle.sendKeys(aca.password);
             let el = await this.getEle(se[3], 1000);
             await this.clickEle(el, 4000, 100);
+            username = await this.driver.executeScript(`return document.querySelectorAll('${se[4]}')[0].textContent;`);
+            if (!username) throw "ログインできませんでした";
             // 多分ログインできてるはず
             let tmp = await this.db.select("TMP"); // 一回やれば、しばらくキャッシュされるので、２時間過ぎたらやり直してみる
             let reFlag = true;
             if (tmp.length && tmp[0].date) {
               if (new Date().getTime() - new Date(tmp[0].date) < 1 * 60 * 60 * 1000) reFlag = false;
             }
-            if (reFlag) {
+            // if (reFlag) {
               // 最初だけちゃんと画面を操作して開く必要あり
               await this.openUrl("https://m-league.jp/games/2018-season"); // URLが変わらなそうなページ
               se = ["'#js-modal-key20181001'", "#js-modal-key20181001 form>button", "script:not([src]):not([type])"];
@@ -232,7 +234,7 @@ class Analyzer extends BaseWebDriverWrapper {
               }
               await this.db.delete("TMP");
               await this.db.insert("TMP", [[new Date().toISOString()]]);
-            }
+            // }
           }
         }
       }
@@ -272,16 +274,19 @@ class Analyzer extends BaseWebDriverWrapper {
                 break;
               }
             }
-          }
+            this.dispLog.info(`${dateId}の ${currentGameId} のデータ抽出完了`);
+          } else throw "データ抽出失敗";
           await this.driver.close(); // このタブを閉じて
           await this.driver.switchTo().window(wid); // 元のウインドウIDにスイッチ
-          this.dispLog.info(`${dateId}の ${currentGameId} のデータ抽出完了`);
         }
       }
     } catch (e) {
       this.dispLog.warn(e);
+      throw e;
     }
-    this.dispLog.info("■対象データの抽出終了■");
+    finally{
+      this.dispLog.info("■対象データの抽出終了■");
+    }
     return this.driver;
   }
 }

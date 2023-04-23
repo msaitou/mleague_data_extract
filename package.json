@@ -1,6 +1,6 @@
 {
   "name": "mleague_data_extract",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "It is an application that extracts and analyzes the stats data of mleague.",
   "main": "./src/main.js",
   "scripts": {
