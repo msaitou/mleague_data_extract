@@ -50,7 +50,7 @@ const thisLog = () => {
   return logger;
 };
 exports.log = thisLog;
-class DispLog{
+class DispLog {
   log;
   mWin;
   constructor(log, mWin) {
@@ -59,35 +59,37 @@ class DispLog{
   }
   info(...mes) {
     this.log.info(mes);
-    if (this.mWin) this.mWin.webContents.send("dispLog", mes); 
+    if (this.mWin) this.mWin.webContents.send("dispLog", mes);
   }
   warn(...mes) {
     this.log.warn(mes);
-    if (this.mWin) this.mWin.webContents.send("dispLog", mes); 
+    if (this.mWin) this.mWin.webContents.send("dispLog", mes);
   }
 }
 exports.DispLog = DispLog;
 const getDriverPath = async function () {
   let log = getLogInstance();
   try {
-    const selenium = require("selenium-download");
-    // Driverをダウンロードするディレクトリを指定
     const path = __dirname + "/bin";
-    log.debug(path);
-    try {
-      // # Driverのダウンロードとアップデート
-      await new Promise((resolve, reject) => {
-        // selenium.ensure(path, (e) => {
-        selenium.update(path, (e) => {
-          if (e) console.error(e.stack);
-          // log.info("?????");
-          resolve(true);
-        });
-      });
-      log.info("desuyoehn");
-    } catch (ee) {
-      log.info(ee);
-    }
+    // const selenium = require("selenium-download");
+    // // Driverをダウンロードするディレクトリを指定
+    // const path = __dirname + "/bin";
+    // log.debug(path);
+    // try {
+    //   // # Driverのダウンロードとアップデート
+    //   await new Promise((resolve, reject) => {
+    //     // selenium.ensure(path, (e) => {
+    //     selenium.update(path, (e) => {
+    //       if (e) console.error(e.stack);
+    //       // log.info("?????");
+    //       resolve(true);
+    //     });
+    //   });
+    //   log.info("desuyoehn");
+    // } catch (ee) {
+    //   log.info(ee);
+    // }
+    await getDownloadUrl();
     // # ChromeDriverのパスを返す。
     return `${path}/${process.platform === "win32" ? "chromedriver.exe" : "chromedriver"}`;
   } catch (error) {
@@ -143,4 +145,163 @@ exports.initBrowserDriver = async function (isMob = false, headless = false) {
   }
   return chrome.Driver.createSession(chromeOptions, service);
   // return new Builder().forBrowser("chrome").setChromeOptions(chromeOptions).build();
+};
+const req = require("request"); // npm i request adm-zip
+const AdmZip = require("adm-zip");
+const url = "https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone-with-downloads.json";
+const exec = require("child_process").exec;
+var CHROME = {
+  BROWSE: {
+    FULL_PATH: "",
+  },
+  DRIVER: {
+    DOWNLOAD_NAME: "chromedriver.zip",
+    DIR: "",
+    NAME: "chromedriver",
+    EXTENSION: { win64: ".exe", linux64: "" },
+  },
+};
+const app = require("electron").app;
+const pathToApp = app.getAppPath();
+const getDownloadUrl = async () => {
+  let log = getLogInstance();
+  CHROME.DRIVER.DIR = __dirname + "\\bin\\";
+  let browsePath = "C:\\ProgramData\\mleague_data_extract\\browse.txt";
+  // もしなければ、フォルダを作って、dbPathのファイルをコピー
+  if (fs.existsSync(browsePath)) {
+    CHROME.BROWSE.FULL_PATH = fs.readFileSync(browsePath, 'utf-8');
+    CHROME.BROWSE.FULL_PATH = CHROME.BROWSE.FULL_PATH.trim()
+  }
+  else CHROME.BROWSE.FULL_PATH = "C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe",
+
+  log.info(`chrome Path ${CHROME.DRIVER.DIR}`);
+  let localOS = getLocalPlatformKey(); // 実行してるOSの種類　win64かlinux64の択一
+  let browseVer = await getNowChromeVer(CHROME.BROWSE.FULL_PATH); // 実行しているOSにインストールされてるchromeのバージョン
+  let localDriverVer = ""; // 実行しているOSにあるchromedriverのバージョン
+  let localDriverFullPath = `${CHROME.DRIVER.DIR}${CHROME.DRIVER.NAME}${CHROME.DRIVER.EXTENSION[localOS]}`;
+  // console.log(localDriverFullPath, fs.existsSync(localDriverFullPath));
+  if (fs.existsSync(localDriverFullPath))
+    localDriverVer = await getNowChromeVer(
+      localOS === "win64" ? localDriverFullPath.split("\\").join("\\\\") : localDriverFullPath,
+      true
+    );
+  log.info(`localOS: ${localOS} local chromeDriverVersion:${localDriverVer} now chromeVersion:${browseVer}`);
+  log.info("path", pathToApp, app.getPath("userData", app.getVersion()));
+  if (localDriverVer === browseVer) return true; // 同じバージョンなら終了
+
+  try {
+    return new Promise((resu, rej) => {
+      req({ url, timeout: 180000 }, async (err, res, body) => {
+        if (err) rej(err);
+        // console.log(res);
+        // let resObj = res.json();
+        // レスポンスコードとHTMLを表示
+        // console.log('body:', JSON.stringify(JSON.parse(body), null, 2));
+        let dObj = JSON.parse(body);
+        // console.log("resObj:", dObj.milestones, browseVer);
+        if (dObj && dObj.milestones[browseVer]) {
+          log.info(dObj.milestones[browseVer].downloads.chromedriver);
+          if (dObj.milestones[browseVer].downloads.chromedriver) {
+            let targetLine = dObj.milestones[browseVer].downloads.chromedriver.filter((l) => l.platform === localOS)[0];
+            if (targetLine) {
+              log.info(targetLine);
+              if (browseVer != localDriverVer) {
+                // ダウンロード
+                log.info(CHROME.DRIVER.DIR + CHROME.DRIVER.DOWNLOAD_NAME);
+                await downloadDriver(targetLine.url);
+                // 解凍
+                let zip = new AdmZip(CHROME.DRIVER.DIR + CHROME.DRIVER.DOWNLOAD_NAME);
+                zip.extractAllTo(/*target path*/ CHROME.DRIVER.DIR, /*overwrite*/ true);
+                for (const zipEntry of zip.getEntries()) {
+                  // __MACOSXフォルダなど、フォルダは無視
+                  if (zipEntry.isDirectory) {
+                    continue;
+                  }
+                  log.info(zipEntry.entryName);
+                  let fName = zipEntry.entryName.split("/");
+                  fName = fName[fName.length - 1];
+                  if (`${CHROME.DRIVER.NAME}${CHROME.DRIVER.EXTENSION[localOS]}` == fName) {
+                    // ドライバーを所定の位置に移動
+                    fs.renameSync(CHROME.DRIVER.DIR + zipEntry.entryName, CHROME.DRIVER.DIR + fName); // デフォルト上書き
+                    if (localOS === "linux64") {
+                      try {
+                        fs.chmodSync(CHROME.DRIVER.DIR + fName, "755");
+                      } catch (e) {
+                        console.log("The permissions for chromedriver have been changed!");
+                        throw e;
+                      }
+                    }
+                    break;
+                  }
+                }
+                // 不要ファイルの削除
+                fs.unlinkSync(CHROME.DRIVER.DIR + CHROME.DRIVER.DOWNLOAD_NAME);
+              }
+            }
+          }
+          // 今ローカルにあるchromedriverのバージョンを取得して、異なっている場合のみダウンロードする　TODO
+        }
+        // console.log("end");
+        resu(true);
+        // process.exit(1);
+      });
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+const downloadDriver = async (url) => {
+  let log = getLogInstance();
+  let downLoadPath = CHROME.DRIVER.DIR + CHROME.DRIVER.DOWNLOAD_NAME;
+  try {
+    if (!fs.existsSync(CHROME.DRIVER.DIR)) fs.mkdirSync(CHROME.DRIVER.DIR);
+    log.info("kite?");
+  }
+  catch(e) {
+    log.info(e);
+  }
+  return new Promise(async (res, rej) => {
+    log.info("kitaaa?");
+    try {
+      req(url)
+        .pipe(fs.createWriteStream(downLoadPath))
+        .on("close", function () {
+  log.info("kitayoo?");
+          console.log("ダウンロード完了");
+          res(true);
+        });
+    } catch (e) {
+      rej(e);
+    }
+  });
+};
+
+const getNowChromeVer = async (fullPath, isDriver) => {
+  return new Promise(async (res, rej) => {
+    let os = getLocalPlatformKey();
+    let cmd =
+      isDriver || os === "linux64"
+        ? `${fullPath} --version`
+        : `wmic datafile where name="${fullPath}" get Version /value`;
+    await exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        console.error(err);
+        rej(err);
+      }
+      // console.log(stdout.trim());
+      let browseVer = "";
+      // どっちのchromeのバージョン文字列によって、切り取り方が変わる（メジャーバージョンの部分だけ抽出）
+      if (isDriver) browseVer = stdout.trim().replace("ChromeDriver ", "").split(".")[0];
+      else if (os === "linux64" && !isDriver) browseVer = stdout.trim().replace("Google Chrome ", "").split(".")[0];
+      // ChromeDriver 116.0.5845.96 (1a391816688002153ef791ffe60d9e899a71a037-refs/branch-heads/5845@{#1382})
+      else browseVer = stdout.trim().replace("Version=", "").split(".")[0]; // Version=117.0.5938.150
+      res(browseVer);
+    });
+  });
+};
+// 実行環境によって、キーを返す。win32はwin64として、それ以外はlinux64　で返す
+const getLocalPlatformKey = () => {
+  // console.log(process.platform);
+  if ("win32" === process.platform) return "win64";
+  else return "linux64"; // macは考慮外
 };
